@@ -7,16 +7,16 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
-import com.xulaoyao.ezphotoedit.listener.IEzBitMapCache;
+import com.xulaoyao.ezphotoedit.listener.IEzBitmapDraw;
 import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.List;
 
 /**
- * EzBitmapCache
+ * EzBitmapDraw
  * Created by renwoxing on 2018/3/18.
  */
-public class EzBitmapCache implements IEzBitMapCache {
+public class EzBitmapDraw implements IEzBitmapDraw {
 
     private Bitmap mBitmap = null;
     private Canvas mPathCanvas = null;
@@ -26,7 +26,7 @@ public class EzBitmapCache implements IEzBitMapCache {
     private List<EzPathInfo> mEzDrawInfoList;
 
 
-    public EzBitmapCache() {
+    public EzBitmapDraw() {
 
     }
 

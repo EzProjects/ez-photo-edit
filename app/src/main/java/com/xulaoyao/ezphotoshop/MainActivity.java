@@ -7,14 +7,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
-import com.xulaoyao.ezphotoedit.draw.EzBitmapCache;
+import com.xulaoyao.ezphotoedit.draw.EzBitmapDraw;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EzBitmapCache ezBitmapData = new EzBitmapCache();
+    private EzBitmapDraw ezBitmapData = new EzBitmapDraw();
 
     private Bitmap bmp;
 
