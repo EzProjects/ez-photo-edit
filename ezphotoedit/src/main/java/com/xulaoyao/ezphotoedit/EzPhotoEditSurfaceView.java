@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -14,16 +15,14 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.widget.Scroller;
 
+import com.xulaoyao.ezphotoedit.draw.EzBitmapCache;
 import com.xulaoyao.ezphotoedit.listener.EzDrawListener;
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
 import com.xulaoyao.ezphotoedit.listener.IEzBitMapCache;
-import com.xulaoyao.ezphotoedit.model.EzDrawInfo;
-import com.xulaoyao.ezphotoedit.model.EzDrawPath;
+import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * EzPhotoEditSurfaceView
@@ -50,17 +49,18 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private float bx, by; //图案初始坐标
 
     private IEzBitMapCache mIEzBitmapData;
-    //private EzBitmapData mEzBitmapData;
-    private ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
+    private EzBitmapCache mEzBitmapCache;
+    //private ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
 
-    private EzDrawInfo mCurrentPathInfo;
-    private List<EzDrawInfo> mPathInfoList = new ArrayList<>();
+    private Path mCurrentPath = new Path();
+    private List<EzPathInfo> mPathInfoList = new ArrayList<>();
 
     private int firstX, firstY;
     private static final int CLICK = 0;// 点击
     private static final int DRAG = 1;// 拖动
     private static final int ZOOM = 2;// 放大
     private int mStatus = 0;//状态
+    private int mClick = 0;//状态
 
     public EzPhotoEditSurfaceView(Context context) {
         this(context, null);
@@ -76,7 +76,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         init();
     }
 
-
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mEzBitmapCache != null)
+            mEzBitmapCache.destroy();
+    }
 
     /**
      * 加入触摸事件
@@ -116,7 +121,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     @Override
     public void computeScroll() {
         //先判断mScroller滚动是否完成
-        if (mScroller.computeScrollOffset()) {
+        if (mScroller.computeScrollOffset() && mStatus == 1 && mClick == 1) {
             //这里调用View的scrollTo()完成实际的滚动
             PointF currentPoint = new PointF();
             currentPoint.set(mScroller.getCurrX(), mScroller.getCurrY());
@@ -126,7 +131,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             bx += offsetX;
             by += offsetY;
             postInvalidate(); //相当于递归computeScroll();目的是触发computeScroll
-        } else {
+        } else if (mStatus == 1 && mClick == 1) {
             mEzDrawThread.setCanPaint(false);
             Log.d("scroll", "stop"); // 暂停绘制
         }
@@ -160,9 +165,16 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void setBitmapData(IEzBitMapCache data) {
         this.mIEzBitmapData = data;
         //重新校准位置和放大倍数
-        if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
+//        if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
     }
 
+    public void setBitmapCache(EzBitmapCache cache) {
+        this.mEzBitmapCache = cache;
+        Log.d("---", "setBitmapCache: cache 图片加载完成后 ");
+        //this.mIEzBitmapData = cache;
+        //重新校准位置和放大倍数
+        if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
+    }
 
 
     //私有方法
@@ -281,11 +293,23 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     // 得到当前画笔的类型，并进行实例
     public void setCurrentPathInfo(float x, float y) {
-        mCurrentPathInfo = new EzDrawPath(x, y, 5, Color.RED);
+        log(x,y);
+        mCurrentPath = null;
+        mCurrentPath = new Path();
+        mCurrentPath.moveTo(x + getScrollX(), y + getScrollY());
     }
 
     private void setPathInfo() {
-        mIEzBitmapData.setPathInfo(mCurrentPathInfo);
+        mPathInfoList.add(new EzPathInfo(mCurrentPath));
+        //Log.d("---55---", "setPathInfo: size:" + mPathInfoList.size());
+        //mIEzBitmapData.setPathInfoList(mPathInfoList);
+        //mEzBitmapData.refreshData();
+        mEzBitmapCache.drawPath(mPathInfoList);
+    }
+
+    private void setPathMove(float x, float y) {
+        log(x,y);
+        mCurrentPath.lineTo(x + getScrollX(), y + getScrollY());
     }
 
     @Override
@@ -298,23 +322,20 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     setCurrentPathInfo(touchX, touchY);
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    mCurrentPathInfo.pathMove(touchX, touchY);
+                    setPathMove(touchX, touchY);
                     //Log.d("--", "onTouchEvent x: " + touchX + " y:" + touchY + " size:" + mPathInfoList.size());
                     break;
                 case MotionEvent.ACTION_UP:
-                    mCurrentPathInfo.pathMove(touchX, touchY);
-                    mPathInfoList.add(mCurrentPathInfo);
+                    setPathMove(touchX, touchY);
                     setPathInfo();
-                    mIEzBitmapData.setPathInfoList(mPathInfoList);
-                    mCurrentPathInfo = null;
                     mEzDrawThread.setCanPaint(true);
-                    //mIEzBitmapData.refreshData();
                     invalidate(); //触发computeScroll
                     break;
 
                 default:
                     break;
             }
+            return true;
         }
         if (mIEzBitmapData != null) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -335,11 +356,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     break;
                 case MotionEvent.ACTION_MOVE:
                     if (Math.abs(firstX - event.getX()) < 3 || Math.abs(firstY - event.getY()) < 3) {
-                        //mClick = CLICK; // 防止手滑的误差
+                        mClick = CLICK; // 防止手滑的误差
                     } else {
                         if (mStatus == DRAG) {
                             drag(event);
-                            //mClick = DRAG;
+                            mClick = DRAG;
 
                             if (mVelocityTracker == null) {
                                 mVelocityTracker = VelocityTracker.obtain();
@@ -349,42 +370,45 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         } else {
                             if (event.getPointerCount() == 1) return true;
                             zoom(event);
-                            //mClick = DRAG;
+                            mClick = DRAG;
                         }
                     }
                     break;
                 case MotionEvent.ACTION_UP:
 
-//                        if (mClick == CLICK) { //点击图案
-//                            clickMap(event);
-//                            drawThread.setCanPaint(false);
-//                        } else {
-                    //获得VelocityTracker对象，并且添加滑动对象
-                    int dx = 0;
-                    int dy = 0;
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.computeCurrentVelocity(100);
-                        dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
-                        dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
+                    if (mClick == CLICK) { //点击图案
+                        //clickMap(event);
+                        mEzDrawThread.setCanPaint(false);
+                    } else {
+                        //获得VelocityTracker对象，并且添加滑动对象
+                        int dx = 0;
+                        int dy = 0;
+                        if (mVelocityTracker != null) {
+                            mVelocityTracker.computeCurrentVelocity(100);
+                            dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
+                            dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
+                        }
+                        mScroller.startScroll((int) mStartPoint.x, (int) mStartPoint.y, dx, dy, VELOCITY_DURATION);
+                        invalidate(); //触发computeScroll
+                        //回收VelocityTracker对象
+                        if (mVelocityTracker != null) {
+                            mVelocityTracker.clear();
+                        }
                     }
-                    mScroller.startScroll((int) mStartPoint.x, (int) mStartPoint.y, dx, dy, VELOCITY_DURATION);
-                    invalidate(); //触发computeScroll
-                    //回收VelocityTracker对象
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.clear();
-                    }
-                    //}
-
-
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
                     break;
                 default:
                     break;
             }
-            return true;
         }
-        //}
-        return false;
+        return true;
+    }
+
+    private void log(float x, float y) {
+        Log.d("-log-", "--- log: getScrollX:" + getScrollX());
+        Log.d("-log-", "--- log: getScrollY:" + getScrollY());
+        Log.d("-log-", "--- log: x:" + x);
+        Log.d("-log-", "--- log: y:" + y);
     }
 }

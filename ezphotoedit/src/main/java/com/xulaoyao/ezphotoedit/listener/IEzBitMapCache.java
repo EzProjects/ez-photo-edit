@@ -2,7 +2,7 @@ package com.xulaoyao.ezphotoedit.listener;
 
 import android.graphics.Bitmap;
 
-import com.xulaoyao.ezphotoedit.model.EzDrawInfo;
+import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.List;
 
@@ -12,13 +12,12 @@ import java.util.List;
  */
 public interface IEzBitMapCache {
 
-    List<EzDrawInfo> getPathInfoList();
-
-    void setPathInfoList(List<EzDrawInfo> list);
-
-    void setPathInfo(EzDrawInfo info);
+    List<EzPathInfo> getPathInfoList();
 
     Bitmap getBgAndPathBitmap();
 
     void setDrawRefreshListener(EzDrawRefreshListener listener);
+
+
+
 }

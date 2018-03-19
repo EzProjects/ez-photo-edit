@@ -13,6 +13,7 @@ public class EzDrawThread extends Thread {
 
     private boolean _isRunning = true;
     private boolean isPaint = true; // 是否直接暂停
+    private int FRAME_INTERVAL = 10;// 默认帧时间10ms
 
     private EzDrawListener mEzDrawListener;
 
@@ -46,12 +47,33 @@ public class EzDrawThread extends Thread {
                 synchronized (mSurfaceHolder) {
                     // 调用外部接口
                     this.mEzDrawListener.onDraw(mCanvas);
+
+                    // 调用外部接口
+                    long endTime = System.currentTimeMillis();
+                    /**
+                     * 计算出绘画一次更新的毫秒数
+                     * **/
+                    int diffTime = (int) (endTime - startTime);
+
+                    if (diffTime < FRAME_INTERVAL) {
+                        try {
+                            Thread.sleep(FRAME_INTERVAL - diffTime);
+                        } catch (InterruptedException e) {
+                            //e.printStackTrace();
+                        }
+                    }
                 }
             } finally {
                 if (mCanvas != null) {
                     //更新UI 线程
                     mSurfaceHolder.unlockCanvasAndPost(mCanvas);
                 }
+            }
+        }else {
+            try {
+                Thread.sleep(FRAME_INTERVAL);
+            } catch (InterruptedException e) {
+                //e.printStackTrace();
             }
         }
     }

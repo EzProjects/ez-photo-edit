@@ -7,14 +7,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
-import com.xulaoyao.ezphotoedit.draw.EzBitmapData;
+import com.xulaoyao.ezphotoedit.draw.EzBitmapCache;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EzBitmapData ezBitmapData = new EzBitmapData();
+    private EzBitmapCache ezBitmapData = new EzBitmapCache();
 
     private Bitmap bmp;
 
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
                     InputStream inputStream = getAssets().open("111.jpg");
                     //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
                     bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-                    ezBitmapData.setBgBitmap(bmp);//设置图片
+                    ezBitmapData.drawBitmap(bmp);//设置图片
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -49,16 +49,20 @@ public class MainActivity extends AppCompatActivity {
                 bmp = null;
                 //getUnitList();//设置数组
                 //adapter.setList(unitList);//设置数组
-                ezBitmapData.refreshData();
+                //ezBitmapData.refreshData();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        pesv.setBitmapCache(ezBitmapData);//初始化
                         findViewById(R.id.tip).setVisibility(View.GONE);
                     }
                 });
             }
         }).start();
+
         pesv.setBitmapData(ezBitmapData);//初始化
+
+
 
     }
 

@@ -2,7 +2,7 @@ package com.xulaoyao.ezphotoedit.draw;
 
 import android.graphics.Bitmap;
 
-import com.xulaoyao.ezphotoedit.model.EzDrawInfo;
+import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,25 +11,26 @@ import java.util.List;
  * EzBitmapData
  * Created by renwoxing on 2018/3/18.
  */
+@Deprecated
 public class EzBitmapData extends EzBitmapCache {
 
     private Bitmap mBgBitmap;
-    private List<EzDrawInfo> mEzDrawInfoList = new ArrayList<>();
+    private List<EzPathInfo> mEzDrawInfoList = new ArrayList<>();
 
     public EzBitmapData() {
     }
 
-    public EzBitmapData(List<EzDrawInfo> mEzDrawInfoList) {
+    public EzBitmapData(List<EzPathInfo> mEzDrawInfoList) {
         this.mEzDrawInfoList = mEzDrawInfoList;
-        drawBitmap(this);
-        drawPath(this);
+        //drawBitmap(this);
+        //drawPath(this);
     }
 
-    public EzBitmapData(Bitmap mBgBitmap, List<EzDrawInfo> mEzDrawInfoList) {
+    public EzBitmapData(Bitmap mBgBitmap, List<EzPathInfo> mEzDrawInfoList) {
         this.mBgBitmap = mBgBitmap;
         this.mEzDrawInfoList = mEzDrawInfoList;
-        drawBitmap(this);
-        drawPath(this);
+        //drawBitmap(this);
+        //drawPath(this);
     }
 
     public void setBgBitmap(Bitmap bmp) {
@@ -43,7 +44,7 @@ public class EzBitmapData extends EzBitmapCache {
      * @return
      */
     @Override
-    public List<EzDrawInfo> getPathInfoList() {
+    public List<EzPathInfo> getPathInfoList() {
         if (mEzDrawInfoList == null)
             return new ArrayList<>();
         else
@@ -51,29 +52,31 @@ public class EzBitmapData extends EzBitmapCache {
     }
 
     @Override
-    public void setPathInfoList(List<EzDrawInfo> list) {
-        this.mEzDrawInfoList = mEzDrawInfoList;
+    public void setPathInfoList(List<EzPathInfo> list) {
+        this.mEzDrawInfoList = list;
     }
 
     @Override
-    public void setPathInfo(EzDrawInfo info) {
+    public void setPathInfo(EzPathInfo info) {
         if (info != null && !this.mEzDrawInfoList.contains(info))
             this.mEzDrawInfoList.add(info);
     }
 
-    @Override
-    public Bitmap getBgBitmap() {
-        return this.mBgBitmap;
-    }
+//    @Override
+//    public Bitmap getBgBitmap() {
+//        return this.mBgBitmap;
+//    }
 
 
     //公有方法
     public void refreshData() {
-        drawBitmap(this);
-        drawPath(this);
-        if (!mBgBitmap.isRecycled()) {
-            mBgBitmap.recycle();
+        //drawBitmap(this);
+        //drawPath(this);
+        if (mBgBitmap != null) {
+            if (!mBgBitmap.isRecycled()) {
+                mBgBitmap.recycle();
+            }
+            this.mBgBitmap = null;
         }
-        this.mBgBitmap = null;
     }
 }

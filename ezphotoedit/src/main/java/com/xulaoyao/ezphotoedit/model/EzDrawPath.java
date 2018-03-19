@@ -8,6 +8,7 @@ import android.graphics.Path;
  * EzDrawPath
  * Created by renwoxing on 2018/3/19.
  */
+@Deprecated
 public class EzDrawPath extends EzDrawInfo {
 
     Path path;
