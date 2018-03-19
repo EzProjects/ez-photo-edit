@@ -260,12 +260,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mPicWidth *= scale1;
             float fx = (event.getX(1) - event.getX(0)) / 2 + event.getX(0);//中点坐标
             float fy = (event.getY(1) - event.getY(0)) / 2 + event.getY(0);
-            float XIn = fx - bx;//获得中点在图中的坐标
-            float YIn = fy - by;
-            XIn *= scale1;//坐标根据图片缩放而变化
-            YIn *= scale1;
-            bx = fx - XIn;//左上角的坐标等于中点坐标加图中偏移的坐标
-            by = fy - YIn;
+            float inBgBitmapX = fx - bx;//获得中点在图中的坐标
+            float inBgBitmapY = fy - by;
+            inBgBitmapX *= scale1;//坐标根据图片缩放而变化
+            inBgBitmapY *= scale1;
+            bx = fx - inBgBitmapX;//左上角的坐标等于中点坐标加图中偏移的坐标
+            by = fy - inBgBitmapY;
         }
     }
 
@@ -298,26 +298,27 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         return (float) Math.sqrt(x * x + y * y);
     }
 
+    public PointF getMotionEventPointInBgBitmapPointF(MotionEvent event) {
+        float inBgBitmapX = event.getX() - bx;//获得中点在图中的坐标
+        float inBgBitmapY = event.getY() - by;
+        inBgBitmapX /= mScale;//坐标根据图片缩放而变化
+        inBgBitmapY /= mScale;
+        return new PointF(inBgBitmapX, inBgBitmapY);
+    }
+
     // 得到当前画笔的类型，并进行实例
     public void setCurrentPathInfo(MotionEvent event) {
-        float XIn = event.getX() - bx;//获得中点在图中的坐标
-        float YIn = event.getY() - by;
-        XIn /= mScale;//坐标根据图片缩放而变化
-        YIn /= mScale;
-
-        log(XIn, YIn);
+        PointF pointF = getMotionEventPointInBgBitmapPointF(event);
+        log(pointF.x, pointF.y);
         mCurrentPath = null;
         mCurrentPath = new Path();
-        mCurrentPath.moveTo(XIn, YIn);
+        mCurrentPath.moveTo(pointF.x, pointF.y);
     }
 
     private void setPathMove(MotionEvent event) {
-        float XIn = event.getX() - bx;//获得中点在图中的坐标
-        float YIn = event.getY() - by;
-        XIn /= mScale;//坐标根据图片缩放而变化
-        YIn /= mScale;
-        log(XIn, YIn);
-        mCurrentPath.lineTo(XIn, YIn);
+        PointF pointF = getMotionEventPointInBgBitmapPointF(event);
+        log(pointF.x, pointF.y);
+        mCurrentPath.lineTo(pointF.x, pointF.y);
     }
 
     private void setPathInfo() {
