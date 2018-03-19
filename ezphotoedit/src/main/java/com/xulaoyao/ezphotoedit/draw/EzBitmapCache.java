@@ -5,7 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.util.Log;
 
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
 import com.xulaoyao.ezphotoedit.listener.IEzBitMapCache;
@@ -31,24 +30,6 @@ public class EzBitmapCache implements IEzBitMapCache {
 
     }
 
-//    public void drawBitmap(EzBitmapCache child) {
-//        Bitmap bg = child.getBgBitmap();
-//        if (bg != null) {
-//            //Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
-//            //根据底图申请缓冲区
-//            mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
-//            //创建空白绘图画布
-//            mPathCanvas = new Canvas(mBitmap);
-//            //底图进来后绘制到缓冲区
-//            mPathCanvas.drawBitmap(bg, new Rect(0, 0, bg.getWidth(), bg.getHeight()), new Rect(0, 0, bg.getWidth(), bg.getHeight()), null);
-//
-//            //监听到手势 改变 图片异步更新 缩放
-//            //改变背景改变缩放
-//            if (mEzDrawRefreshListener != null) mEzDrawRefreshListener.onRefresh();
-//            //刷新监听器缩放
-//        }
-//    }
-
     public void drawBitmap(Bitmap bg) {
         if (bg != null) {
             //Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
@@ -66,33 +47,18 @@ public class EzBitmapCache implements IEzBitMapCache {
         }
     }
 
-//    public void drawPath(EzBitmapCache child) {
-//        Log.d("=-=-=-", "drawPath: ");
-//        if (mEzDrawInfoList == null) {
-//            mEzDrawInfoList = child.getPathInfoList();
-//        }
-//        if (mEzDrawInfoList != null) {
-//            Log.d("--", "drawPath  size:" + mEzDrawInfoList.size());
-//            for (EzPathInfo path : mEzDrawInfoList) {
-//                mPathCanvas.drawPath(path.getPath(), getPaint());
-//            }
-//        }
-//        mPathCanvas = null;
-//    }
+
 
     //@Override
     public void drawPath(List<EzPathInfo> pathInfoList) {
-        //Log.d("=-=-=-", "drawPath: pathInfoList");
         if (pathInfoList != null) {
             mEzDrawInfoList = pathInfoList;
         }
         if (mEzDrawInfoList != null) {
-            Log.d("--", "drawPath pathInfoList  size:" + mEzDrawInfoList.size());
             for (EzPathInfo path : mEzDrawInfoList) {
                 mPathCanvas.drawPath(path.getPath(), getPaint());
             }
         }
-        //mPathCanvas = null;
     }
 
 
@@ -114,7 +80,6 @@ public class EzBitmapCache implements IEzBitMapCache {
 
     //@Override
     public void setPathInfoList(List<EzPathInfo> list) {
-        Log.d("--- 接口传递 ", "setPathInfoList size: " + list.size());
         this.mEzDrawInfoList = list;
     }
 

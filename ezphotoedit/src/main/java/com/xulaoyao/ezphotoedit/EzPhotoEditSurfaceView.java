@@ -284,6 +284,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         }
     }
 
+    /**
+     * 双指中心
+     *
+     * @param event
+     * @return
+     */
     //获取距离运算
     private float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
@@ -292,13 +298,25 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     }
 
     // 得到当前画笔的类型，并进行实例
-    public void setCurrentPathInfo(float x, float y) {
-        log(x,y);
+    public void setCurrentPathInfo(MotionEvent event) {
+        float XIn = event.getX() - bx;//获得中点在图中的坐标
+        float YIn = event.getY() - by;
+        XIn /= mScale;//坐标根据图片缩放而变化
+        YIn /= mScale;
+
+        log(XIn, YIn);
         mCurrentPath = null;
         mCurrentPath = new Path();
-        mCurrentPath.moveTo(x + getScrollX(), y + getScrollY());
+        mCurrentPath.moveTo(XIn, YIn);
     }
-
+    private void setPathMove(MotionEvent event) {
+        float XIn = event.getX() - bx;//获得中点在图中的坐标
+        float YIn = event.getY() - by;
+        XIn /= mScale;//坐标根据图片缩放而变化
+        YIn /= mScale;
+        log(XIn, YIn);
+        mCurrentPath.lineTo(XIn, YIn);
+    }
     private void setPathInfo() {
         mPathInfoList.add(new EzPathInfo(mCurrentPath));
         //Log.d("---55---", "setPathInfo: size:" + mPathInfoList.size());
@@ -307,10 +325,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mEzBitmapCache.drawPath(mPathInfoList);
     }
 
-    private void setPathMove(float x, float y) {
-        log(x,y);
-        mCurrentPath.lineTo(x + getScrollX(), y + getScrollY());
-    }
+
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
@@ -319,14 +334,14 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             float touchY = event.getRawY();
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
-                    setCurrentPathInfo(touchX, touchY);
+                    setCurrentPathInfo(event);
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    setPathMove(touchX, touchY);
+                    setPathMove(event);
                     //Log.d("--", "onTouchEvent x: " + touchX + " y:" + touchY + " size:" + mPathInfoList.size());
                     break;
                 case MotionEvent.ACTION_UP:
-                    setPathMove(touchX, touchY);
+                    setPathMove(event);
                     setPathInfo();
                     mEzDrawThread.setCanPaint(true);
                     invalidate(); //触发computeScroll
@@ -410,5 +425,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         Log.d("-log-", "--- log: getScrollY:" + getScrollY());
         Log.d("-log-", "--- log: x:" + x);
         Log.d("-log-", "--- log: y:" + y);
+        Log.d("-log-", "--- screen: width:" + mScreenWidth + " height:" + mScreenHeight);
+        Log.d("-log-", "--- image: width:" + mPicWidth + " height:" + mPicHeight);
+        Log.d("-log-", "--- 偏移: by:" + bx + " by:" + by);
     }
 }
