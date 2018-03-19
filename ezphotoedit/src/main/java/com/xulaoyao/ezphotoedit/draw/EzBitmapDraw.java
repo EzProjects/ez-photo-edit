@@ -27,7 +27,7 @@ public class EzBitmapDraw implements IEzBitmapDraw {
 
 
     public EzBitmapDraw() {
-
+        getPaint();
     }
 
     public void drawBitmap(Bitmap bg) {
@@ -48,17 +48,17 @@ public class EzBitmapDraw implements IEzBitmapDraw {
     }
 
 
-
-    //@Override
     public void drawPath(List<EzPathInfo> pathInfoList) {
         if (pathInfoList != null) {
             mEzDrawInfoList = pathInfoList;
         }
         if (mEzDrawInfoList != null) {
             for (EzPathInfo path : mEzDrawInfoList) {
-                mPathCanvas.drawPath(path.getPath(), getPaint());
+                paint.setStrokeWidth(path.strokeWidth);
+                mPathCanvas.drawPath(path.path, paint);
             }
         }
+        //mPathCanvas.restore();
     }
 
 
@@ -105,18 +105,18 @@ public class EzBitmapDraw implements IEzBitmapDraw {
         if (paint == null) {
             paint = new Paint();
             paint.setColor(Color.RED);
-            paint.setStrokeWidth(5);
+            paint.setStrokeWidth(10);
             paint.setStyle(Paint.Style.STROKE);
-            //paint.setStyle(Paint.Style.FILL);
-            //paint.setAlpha(30);
         }
         return paint;
     }
 
 
     public void destroy() {
-        if (mPathCanvas != null)
+        if (mPathCanvas != null) {
+            mPathCanvas.restore();
             mPathCanvas = null;
+        }
         if (mEzDrawInfoList != null) {
             mEzDrawInfoList.clear();
             mEzDrawInfoList = null;
