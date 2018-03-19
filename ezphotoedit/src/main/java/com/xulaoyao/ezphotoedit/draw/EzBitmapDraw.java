@@ -58,7 +58,8 @@ public class EzBitmapDraw implements IEzBitmapDraw {
                 mPathCanvas.drawPath(path.path, paint);
             }
         }
-        //mPathCanvas.restore();
+        mPathCanvas.save();
+        mPathCanvas.restore();
     }
 
 
