@@ -54,7 +54,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     private IEzBitmapDraw mIEzBitmapData;
     private EzBitmapDraw mEzBitmapCache;
-    //private ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
 
     private Path mCurrentPath = new Path();
     private List<EzPathInfo> mPathInfoList = new ArrayList<>();
@@ -84,43 +83,15 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         super.onDetachedFromWindow();
         if (mEzBitmapCache != null)
             mEzBitmapCache.destroy();
+//        if (mPathInfoList != null) {
+//            mPathInfoList.clear();
+//            mPathInfoList = null;
+//        }
+//        if (mCurrentPath != null)
+//            mCurrentPath.reset();
+
     }
 
-    /**
-     * 加入触摸事件
-     */
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        int action = event.getAction();
-//        if (action == MotionEvent.ACTION_CANCEL) {
-//            return false;
-//        }
-//        if (event.getPointerCount() < 2) {
-//            float touchX = event.getRawX();
-//            float touchY = event.getRawY();
-//
-//            switch (action) {
-//                case MotionEvent.ACTION_DOWN:
-//                    setCurrentPathInfo(touchX, touchY);
-//                    break;
-//                case MotionEvent.ACTION_MOVE:
-//                    mCurrentPathInfo.pathMove(touchX, touchY);
-//                    Log.d("--", "onTouchEvent x: " + touchX + " y:" + touchY + " size:" + mPathInfoList.size());
-//                    break;
-//                case MotionEvent.ACTION_UP:
-//                    mCurrentPathInfo.pathMove(touchX, touchY);
-//                    mPathInfoList.add(mCurrentPathInfo);
-//                    mCurrentPathInfo = null;
-//                    break;
-//
-//                default:
-//                    break;
-//            }
-//        } else {
-//
-//        }
-//        return super.onTouchEvent(event);
-//    }
     @Override
     public void computeScroll() {
         //先判断mScroller滚动是否完成
@@ -136,7 +107,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             postInvalidate(); //相当于递归computeScroll();目的是触发computeScroll
         } else if (mStatus == 1 && mClick == 1) {
             mEzDrawThread.setCanPaint(false);
-            Log.d("scroll", "stop"); // 暂停绘制
         }
         super.computeScroll();
     }
@@ -158,6 +128,16 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        if (mPathInfoList != null) {
+            mPathInfoList.clear();
+            mPathInfoList = null;
+        }
+        if (mCurrentPath != null)
+            mCurrentPath.reset();
+
+        if (mEzBitmapCache != null)
+            mEzBitmapCache.destroy();
+
         mEzDrawThread.setThreadRun(false);
         mEzDrawThread.interrupt();  //中断线程
         mEzDrawThread = null;
@@ -291,13 +271,18 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @param event
      * @return
      */
-    //获取距离运算
     private float distanceBetweenFingers(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
     }
 
+    /**
+     * 获取屏幕座标在原图（原始大小）上的点座标
+     *
+     * @param event
+     * @return
+     */
     public PointF getMotionEventPointInBgBitmapPointF(MotionEvent event) {
         float inBgBitmapX = event.getX() - bx;//获得中点在图中的坐标
         float inBgBitmapY = event.getY() - by;
@@ -309,7 +294,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     // 得到当前画笔的类型，并进行实例
     public void setCurrentPathInfo(MotionEvent event) {
         PointF pointF = getMotionEventPointInBgBitmapPointF(event);
-        log(pointF.x, pointF.y);
+        //log(pointF.x, pointF.y);
         mCurrentPath = null;
         mCurrentPath = new Path();
         mCurrentPath.moveTo(pointF.x, pointF.y);
@@ -317,7 +302,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     private void setPathMove(MotionEvent event) {
         PointF pointF = getMotionEventPointInBgBitmapPointF(event);
-        log(pointF.x, pointF.y);
+        //log(pointF.x, pointF.y);
         mCurrentPath.lineTo(pointF.x, pointF.y);
     }
 
@@ -411,9 +396,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             mVelocityTracker.clear();
                         }
                     }
+                    mStartDistance = 0;
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
                     //多指离开
+                    mStartDistance = 0;
                     break;
                 default:
                     break;
