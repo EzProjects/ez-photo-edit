@@ -111,6 +111,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        final Button btnReset = (Button) findViewById(R.id.btn_rest);
+        btnReset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pesv.clear();
+                //清屏后状态改变
+                btnEdit.setTag("1");
+                btnEdit.setText("编辑");
+            }
+        });
+
 
     }
 

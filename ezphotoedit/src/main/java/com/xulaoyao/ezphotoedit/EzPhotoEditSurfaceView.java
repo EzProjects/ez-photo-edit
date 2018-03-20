@@ -177,7 +177,15 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * 清屏
      */
     public void clear() {
-
+        if (isEdit) {
+            resetClear();
+            this.mEzBitmapCache.reset();
+            //重新校准位置和放大倍数
+            setScale(true);
+            setPicInit();
+            //绘制 防止不正常显示
+            mEzDrawThread.setCanPaint(true);
+        }
     }
 
     /**

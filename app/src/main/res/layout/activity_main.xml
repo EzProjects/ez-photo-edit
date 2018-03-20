@@ -40,9 +40,9 @@
         android:id="@+id/btn_edit"
         android:layout_width="60dp"
         android:layout_height="48dp"
-        android:tag="1"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
+        android:tag="1"
         android:text="编辑" />
 
     <Button
@@ -50,7 +50,15 @@
         android:layout_width="60dp"
         android:layout_height="48dp"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="true"
         android:text="换图" />
+
+    <Button
+        android:id="@+id/btn_rest"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="重置" />
 
 </RelativeLayout>
