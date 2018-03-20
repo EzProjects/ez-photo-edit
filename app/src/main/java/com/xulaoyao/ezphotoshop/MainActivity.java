@@ -34,10 +34,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void info(int code, String msg) {
                 Log.d("---", "info: " + msg);
-                if (code == 200){
+                if (code == 200) {
                     findViewById(R.id.tip).setVisibility(View.GONE);
                 }
                 Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void next() {
+                Log.d("=-", "next: -----------------=---------=------------------=------------=-------");
+                Toast.makeText(MainActivity.this, "next", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void previous() {
+                Toast.makeText(MainActivity.this, "previous", Toast.LENGTH_SHORT).show();
             }
         });
         //延迟展区区域数据加载

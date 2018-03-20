@@ -29,7 +29,8 @@ import java.util.List;
  * 涂鸦 SurfaceView
  * 分为： 编辑状态或可视状态
  * 编辑状态下：单指绘画，双指移动
- * 可视状态下：单指移动，双指缩放
+ * 可视状态下：单指移动，双指缩放 , 三指左右快速滑动 fling 翻页
+ * <p>
  * 可撤销，清屏
  * EzPhotoEditSurfaceView
  * Created by renwoxing on 2018/3/18.
@@ -76,6 +77,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private boolean isEdit = false;   //编辑状态 还是 可视状态
     private boolean isMultiPointerToOneUp = true;   //多点触摸单指抬起后的标记
     private long lastMultiPointerTime;    // 记录多点触控的时间
+    private boolean isFlingPage = false;  //翻页状态
 
     private PhotoEditListener mPhotoEditListener;
 
@@ -447,6 +449,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public boolean onTouch(View view, MotionEvent event) {
         if (mVelocityTracker == null) {
             mVelocityTracker = VelocityTracker.obtain();
+        } else {
+            mVelocityTracker.clear();
         }
         mVelocityTracker.addMovement(event);
         //此处是批改状态
@@ -471,6 +475,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //Log.d("--", "11111 onTouch: ACTION_DOWN --- x:" + event.getRawX() + " y: " + event.getRawY());
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN:
+                    isFlingPage = false;
                     mStatus = GESTURE_DETECTOR_ZOOM;   //绘制路径
                     mClick = mStatus;
                     isMultiPointerToOneUp = false;
@@ -480,6 +485,38 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //Log.d("--", "2222222222 onTouch: ACTION_POINTER_DOWN --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 case MotionEvent.ACTION_MOVE:
+                    //滑动速度
+                    //获得VelocityTracker对象，并且添加滑动对象
+                    //值为1时：代表每毫秒运动一个像素，px/ms
+                    //值为1000时：代表每秒运动1000个像素，1000px/s
+                    int xVelocity = 0;
+                    int yVelocity = 0;
+                    if (mVelocityTracker != null) {
+                        mVelocityTracker.computeCurrentVelocity(1000);
+                        xVelocity = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
+                        yVelocity = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
+                    }
+                    log(xVelocity, yVelocity);
+                    if (!isEdit && event.getPointerCount() > 2) {
+                        //翻页
+                        if (xVelocity > 3000) {
+                            if (mPhotoEditListener != null && !isFlingPage) {
+                                mPhotoEditListener.next();
+                                isFlingPage = true;
+                            }
+                            return true;
+                        }
+                        if (xVelocity < -300) {
+                            if (mPhotoEditListener != null && !isFlingPage) {
+                                isFlingPage = true;
+                                mPhotoEditListener.previous();
+                            }
+                            return true;
+                        }
+                    }
+                    if (!isEdit && isFlingPage) {
+                        return true;
+                    }
                     if (Math.abs(firstX - centerBetweenFingers(event).x) < 3 || Math.abs(firstY - centerBetweenFingers(event).y) < 3) {
                         mClick = GESTURE_DETECTOR_CLICK; // 防止手滑的误差
                     } else {
@@ -522,6 +559,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + event.getRawX() + "y: " + event.getRawY() + " status:" + mStatus + " click:" + mClick);
                     break;
                 case MotionEvent.ACTION_UP:
+                    isFlingPage = false;
                     if (mStatus == GESTURE_DETECTOR_PATH && isEdit) {
                         setPathMove(event, 0);
                         setPathInfo();
@@ -538,7 +576,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             int dx = 0;
                             int dy = 0;
                             if (mVelocityTracker != null) {
-                                mVelocityTracker.computeCurrentVelocity(100);
+                                mVelocityTracker.computeCurrentVelocity(1000);
                                 dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
                                 dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
                             }
@@ -548,10 +586,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             mScroller.startScroll((int) mStartPoint.x, (int) mStartPoint.y, dx, dy, VELOCITY_DURATION);
                             postInvalidate(); //触发computeScroll
                         }
-                    }
-                    //回收VelocityTracker对象
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.clear();
                     }
                     mStartDistance = 0;
                     //Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getRawX() + "y: " + event.getRawY());
@@ -568,7 +602,9 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //mStartDistance = 0;
                     //Log.d("--", "55555 onTouch: ACTION_POINTER_UP --- x:" + event.getX() + "y: " + event.getY());
                     break;
-                default:
+
+                case MotionEvent.ACTION_CANCEL:
+                    mVelocityTracker.recycle();
                     break;
             }
         }
