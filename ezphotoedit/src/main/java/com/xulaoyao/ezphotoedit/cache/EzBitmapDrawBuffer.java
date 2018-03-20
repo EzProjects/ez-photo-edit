@@ -1,4 +1,4 @@
-package com.xulaoyao.ezphotoedit.draw;
+package com.xulaoyao.ezphotoedit.cache;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -8,16 +8,17 @@ import android.graphics.Rect;
 import android.util.Log;
 
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
-import com.xulaoyao.ezphotoedit.listener.IEzBitmapDraw;
+import com.xulaoyao.ezphotoedit.listener.IEzBitmapDrawCache;
 import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.List;
 
 /**
- * EzBitmapDraw
+ * 组合图片 buffer 缓存
+ * EzBitmapDrawBuffer
  * Created by renwoxing on 2018/3/18.
  */
-public class EzBitmapDraw implements IEzBitmapDraw {
+public class EzBitmapDrawBuffer implements IEzBitmapDrawCache {
 
     private Bitmap mBitmap = null;
     private Bitmap mBgBitmap = null;
@@ -28,7 +29,7 @@ public class EzBitmapDraw implements IEzBitmapDraw {
     private List<EzPathInfo> mEzDrawInfoList;
 
 
-    public EzBitmapDraw() {
+    public EzBitmapDrawBuffer() {
         getPaint();
     }
 
@@ -57,7 +58,6 @@ public class EzBitmapDraw implements IEzBitmapDraw {
             mEzDrawInfoList = pathInfoList;
         }
         if (mEzDrawInfoList != null) {
-            Log.d("--ss--ss", "drawPath:  size:" + mEzDrawInfoList.size());
             for (EzPathInfo path : mEzDrawInfoList) {
                 paint.setStrokeWidth(path.strokeWidth);
                 if (mPathCanvas != null)
@@ -107,18 +107,18 @@ public class EzBitmapDraw implements IEzBitmapDraw {
         this.mEzDrawRefreshListener = listener;
     }
 
-    //@Override
+
     public void setPathInfoList(List<EzPathInfo> list) {
         this.mEzDrawInfoList = list;
     }
 
-    //@Override
+
     public void setPathInfo(EzPathInfo info) {
         if (info != null && !this.mEzDrawInfoList.contains(info))
             this.mEzDrawInfoList.add(info);
     }
 
-    //public abstract Bitmap getBgBitmap();
+
 
     public List<EzPathInfo> getPathInfoList() {
         return mEzDrawInfoList;

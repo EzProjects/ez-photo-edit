@@ -7,10 +7,11 @@ import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 import java.util.List;
 
 /**
- * IEzBitmapDraw
+ * IEzBitmapDrawCache
+ * cache 接口封装
  * Created by renwoxing on 2018/3/18.
  */
-public interface IEzBitmapDraw {
+public interface IEzBitmapDrawCache {
 
     List<EzPathInfo> getPathInfoList();
 

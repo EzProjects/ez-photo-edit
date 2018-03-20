@@ -4,17 +4,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
+import com.xulaoyao.ezphotoedit.listener.PhotoEditListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    //private EzBitmapDraw ezBitmapData = new EzBitmapDraw();
+    //private EzBitmapDrawBuffer ezBitmapData = new EzBitmapDrawBuffer();
 
     private Bitmap bmp;
 
@@ -25,6 +28,13 @@ public class MainActivity extends AppCompatActivity {
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
 
+        pesv.setPhotoEditListener(new PhotoEditListener() {
+            @Override
+            public void info(int code, String msg) {
+                Log.d("---", "info: " + msg);
+                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
         //延迟展区区域数据加载
         new Thread(new Runnable() {
             @Override
