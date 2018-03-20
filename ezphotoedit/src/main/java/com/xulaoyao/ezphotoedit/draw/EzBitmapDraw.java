@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.util.Log;
 
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
 import com.xulaoyao.ezphotoedit.listener.IEzBitmapDraw;
@@ -34,7 +35,7 @@ public class EzBitmapDraw implements IEzBitmapDraw {
     public void drawBitmap(Bitmap bg) {
         if (bg != null) {
             mBgBitmap = bg;
-            //Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
+            Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
             //根据底图申请缓冲区
             //mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
             mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.ARGB_8888);//创建内存位图
@@ -56,9 +57,11 @@ public class EzBitmapDraw implements IEzBitmapDraw {
             mEzDrawInfoList = pathInfoList;
         }
         if (mEzDrawInfoList != null) {
+            Log.d("--ss--ss", "drawPath:  size:" + mEzDrawInfoList.size());
             for (EzPathInfo path : mEzDrawInfoList) {
                 paint.setStrokeWidth(path.strokeWidth);
-                mPathCanvas.drawPath(path.path, paint);
+                if (mPathCanvas != null)
+                    mPathCanvas.drawPath(path.path, paint);
             }
         }
         mPathCanvas.save();
@@ -78,8 +81,8 @@ public class EzBitmapDraw implements IEzBitmapDraw {
                 mPathCanvas.drawPath(path.path, paint);
             }
         }
-        //mPathCanvas.save();
-        //mPathCanvas.restore();
+        mPathCanvas.save();
+        mPathCanvas.restore();
     }
 
     /**
@@ -145,7 +148,6 @@ public class EzBitmapDraw implements IEzBitmapDraw {
             mBgBitmap = null;
         }
         if (mPathCanvas != null) {
-            mPathCanvas.restore();
             mPathCanvas = null;
         }
         if (mEzDrawInfoList != null) {

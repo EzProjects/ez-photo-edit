@@ -95,21 +95,18 @@ public class MainActivity extends AppCompatActivity {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException e) {
-                        }
                         //背景图
                         BitmapFactory.Options opt = new BitmapFactory.Options();
                         opt.inPreferredConfig = Bitmap.Config.RGB_565;
                         try {
-                            InputStream inputStream = getAssets().open("jjj.jpeg");
+                            InputStream inputStream = getAssets().open("jj.jpeg");
                             bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-                            ezBitmapData.drawBitmap(bmp);//设置图片
+                            //ezBitmapData.drawBitmap(bmp);//设置图片
+                            pesv.reset(bmp);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        bmp.recycle();
+                        //bmp.recycle();
                         bmp = null;
                         runOnUiThread(new Runnable() {
                             @Override
@@ -121,8 +118,6 @@ public class MainActivity extends AppCompatActivity {
                 }).start();
             }
         });
-
-
 
 
     }

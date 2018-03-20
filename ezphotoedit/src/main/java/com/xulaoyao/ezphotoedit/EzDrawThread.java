@@ -82,7 +82,13 @@ public class EzDrawThread extends Thread {
         this._isRunning = running;
     }
 
+    public boolean isRunning() {
+        return _isRunning;
+    }
+
     public void setCanPaint(boolean canPaint) { // 设置是否绘制
         this.isPaint = canPaint;
     }
+
+
 }

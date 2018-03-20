@@ -1,6 +1,7 @@
 package com.xulaoyao.ezphotoedit;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -69,8 +70,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     private boolean isEdit = false;   //编辑状态 还是 可视状态
 
-    //记录单次点合集
-    private List<PointF> mPoints;
 
     public EzPhotoEditSurfaceView(Context context) {
         this(context, null);
@@ -159,6 +158,14 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
     }
 
+    public void reset(Bitmap bgBitmap) {
+        resetClear();
+        this.mEzBitmapCache.drawBitmap(bgBitmap);
+        //重新校准位置和放大倍数
+        setScale(true);
+        setPicInit();
+    }
+
     /**
      * 撤销
      */
@@ -185,6 +192,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void setEdit(boolean edit) {
         isEdit = edit;
     }
+
 
     //私有方法
 
@@ -460,6 +468,33 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             }
         }
         return true;
+    }
+
+    private void resetClear() {
+        //mEzDrawThread.setCanPaint(false);
+        //mEzDrawThread.setThreadRun(false);
+        //mEzDrawThread.interrupt();
+        // mEzDrawThread = null;
+//        if (mEzBitmapCache != null)
+//            mEzBitmapCache.destroy();
+        if (mEzPathInfo != null)
+            mEzPathInfo.clear();
+//        if (mIEzBitmapData != null)
+//            mIEzBitmapData = null;
+        isEdit = false;
+        mStatus = 0;
+        mClick = 0;
+        firstX = 0;
+        firstY = 0;
+        mScale = 1;
+        mScaleFirst = 1;
+        mStartPoint.set(0, 0);
+        bx = 0;
+        by = 0;
+        mPicWidth = 0;
+        mPicHeight = 0;
+        if (mPathInfoList != null && mPathInfoList.size() > 0)
+            mPathInfoList.clear();
     }
 
     private void log(float x, float y) {
