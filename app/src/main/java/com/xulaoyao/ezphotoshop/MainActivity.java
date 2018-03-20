@@ -72,6 +72,58 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        final Button btnEdit = (Button) findViewById(R.id.btn_edit);
+        btnEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pesv.setEdit("1".equals(view.getTag().toString()));
+                if ("1".equals(view.getTag().toString())) {
+                    view.setTag("0");
+                    btnEdit.setText("可视");
+                } else {
+                    view.setTag("1");
+                    btnEdit.setText("编辑");
+                }
+            }
+        });
+
+        final Button btnChange = (Button) findViewById(R.id.btn_change);
+        btnChange.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                findViewById(R.id.tip).setVisibility(View.VISIBLE);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException e) {
+                        }
+                        //背景图
+                        BitmapFactory.Options opt = new BitmapFactory.Options();
+                        opt.inPreferredConfig = Bitmap.Config.RGB_565;
+                        try {
+                            InputStream inputStream = getAssets().open("jjj.jpeg");
+                            bmp = BitmapFactory.decodeStream(inputStream);//图片资源
+                            ezBitmapData.drawBitmap(bmp);//设置图片
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        bmp.recycle();
+                        bmp = null;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                findViewById(R.id.tip).setVisibility(View.GONE);
+                            }
+                        });
+                    }
+                }).start();
+            }
+        });
+
+
+
 
     }
 

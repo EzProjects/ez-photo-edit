@@ -67,6 +67,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private int mStatus = 0;//状态
     private int mClick = 0;//状态
 
+    private boolean isEdit = false;   //编辑状态 还是 可视状态
+
     //记录单次点合集
     private List<PointF> mPoints;
 
@@ -94,7 +96,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     @Override
     public void computeScroll() {
         //先判断mScroller滚动是否完成
-        if (mScroller.computeScrollOffset() && mStatus == 1 && mClick == 1) {
+        if (mScroller.computeScrollOffset() && mStatus == GESTURE_DETECTOR_DRAG && mClick == GESTURE_DETECTOR_DRAG) {
             //这里调用View的scrollTo()完成实际的滚动
             PointF currentPoint = new PointF();
             currentPoint.set(mScroller.getCurrX(), mScroller.getCurrY());
@@ -104,7 +106,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             bx += offsetX;
             by += offsetY;
             postInvalidate(); //相当于递归computeScroll();目的是触发computeScroll
-        } else if (mStatus == 1 && mClick == 1) {
+        } else if (mStatus == GESTURE_DETECTOR_DRAG && mClick == GESTURE_DETECTOR_DRAG) {
             mEzDrawThread.setCanPaint(false);
         }
         super.computeScroll();
@@ -134,6 +136,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         if (mEzBitmapCache != null)
             mEzBitmapCache.destroy();
 
+        if (mVelocityTracker != null) {
+            mVelocityTracker.clear();
+            mVelocityTracker.recycle();
+        }
+
         mEzDrawThread.setThreadRun(false);
         mEzDrawThread.interrupt();  //中断线程
         mEzDrawThread = null;
@@ -156,6 +163,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * 撤销
      */
     public void undo() {
+        if (!isEdit)
+            return;
         if (mPathInfoList != null && mPathInfoList.size() > 0) {
             mPathInfoList.remove(mPathInfoList.size() - 1);
             Log.d("--s-0-", "undo:  size:" + mPathInfoList.size());
@@ -166,6 +175,16 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         }
     }
 
+    /**
+     * 设置为 编辑状态或可视状态
+     * 编辑状态下 双指移动 单指绘画
+     * 可视状态 双指缩放 单指移动
+     *
+     * @param edit
+     */
+    public void setEdit(boolean edit) {
+        isEdit = edit;
+    }
 
     //私有方法
 
@@ -248,8 +267,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             }
             mPicHeight *= scale1;//缩放了高宽
             mPicWidth *= scale1;
-            float fx = (event.getX(1) - event.getX(0)) / 2 + event.getX(0);//中点坐标
-            float fy = (event.getY(1) - event.getY(0)) / 2 + event.getY(0);
+            float fx = 0f, fy = 0f;
+            if (event.getPointerCount() > 1) {
+                fx = (event.getX(1) - event.getX(0)) / 2 + event.getX(0);//中点坐标
+                fy = (event.getY(1) - event.getY(0)) / 2 + event.getY(0);
+            }
             float inBgBitmapX = fx - bx;//获得中点在图中的坐标
             float inBgBitmapY = fy - by;
             inBgBitmapX *= scale1;//坐标根据图片缩放而变化
@@ -274,6 +296,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         }
     }
 
+
     /**
      * 双指中心
      * 计算两个手指之间的距离。
@@ -282,13 +305,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @return
      */
     private float distanceBetweenFingers(MotionEvent event) {
-        try {
-            float x = event.getX(0) - event.getX(1);
-            float y = event.getY(0) - event.getY(1);
-            return (float) Math.sqrt(x * x + y * y);
-        } catch (Exception e) {
-            return 1f;
+        float x = 0f, y = 0f;
+        if (event.getPointerCount() > 1) {
+            x = event.getX(0) - event.getX(1);
+            y = event.getY(0) - event.getY(1);
         }
+        return (float) Math.sqrt(x * x + y * y);
     }
 
     /**
@@ -335,19 +357,20 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
+        //此处是批改状态
         if (mIEzBitmapData != null) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
                     firstX = (int) event.getX();
                     firstY = (int) event.getY();
                     mStartPoint.set(event.getX(), event.getY());
-                    mStatus = GESTURE_DETECTOR_PATH;   //绘制路径
-                    setCurrentPathInfo(event);
-                    mEzDrawThread.setCanPaint(true);
-                    if (mVelocityTracker == null) {
-                        mVelocityTracker = VelocityTracker.obtain();
+                    mStatus = GESTURE_DETECTOR_DRAG;   //绘制路径
+                    if (isEdit) {
+                        mStatus = GESTURE_DETECTOR_PATH;   //绘制路径
+                        setCurrentPathInfo(event);
                     }
-                    mVelocityTracker.addMovement(event);
+                    mEzDrawThread.setCanPaint(true);
+                    Log.d("--", "11111 onTouch: ACTION_DOWN --- x:" + firstX + " y: " + firstY);
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN:
                     //多指按下
@@ -358,13 +381,14 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         mStartDistance = distance;
                     }
                     mEzDrawThread.setCanPaint(true);
+                    Log.d("--", "2222222222 onTouch: ACTION_POINTER_DOWN --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    if (Math.abs(firstX - event.getX()) < 3 || Math.abs(firstY - event.getY()) < 3) {
+                    if (Math.abs(firstX - event.getX()) < 1 || Math.abs(firstY - event.getY()) < 1) {
                         mClick = GESTURE_DETECTOR_CLICK; // 防止手滑的误差
-                    } else if (event.getPointerCount() > 1) {
+                    } else {
                         float distanceMove = distanceBetweenFingers(event);
-                        if (Math.abs(distanceMove - mStartDistance) < 1f) {
+                        if (event.getPointerCount() > 1 && Math.abs(distanceMove - mStartDistance) < 1f) {
                             mStatus = GESTURE_DETECTOR_DRAG;
                         }
                         if (mStatus == GESTURE_DETECTOR_DRAG) {
@@ -374,72 +398,62 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                                 mVelocityTracker = VelocityTracker.obtain();
                             }
                             mVelocityTracker.addMovement(event);
-                        }
-                        if (mStatus == GESTURE_DETECTOR_ZOOM) {
-                            zoom(event);
-                        }
-                    } else {
-                        float dx = 0;
-                        if (mVelocityTracker != null) {
-                            mVelocityTracker.computeCurrentVelocity(100);
-                            dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
-                        }
-                        if (mStatus == GESTURE_DETECTOR_PATH) {
-                            if (event.getPointerCount() == 1) {
-                                if (Math.abs(firstX - event.getX()) >= TOUCH_TOLERANCE || Math.abs(firstY - event.getY()) >= TOUCH_TOLERANCE) {
-                                    setPathMove(event, dx);
-                                    mEzDrawThread.setCanPaint(true);
-                                }
-                                return true;
-                            }
+
                         } else {
-//                            if (event.getPointerCount() == 1) {
-//                                setPathMove(event, dx);
-//                                mEzDrawThread.setCanPaint(true);
-//                                return true;
-//                            }
+                            if (event.getPointerCount() == 1) {
+                                if (mStatus == GESTURE_DETECTOR_PATH && isEdit) {
+                                    if (event.getPointerCount() == 1) {
+                                        if (Math.abs(firstX - event.getX()) >= TOUCH_TOLERANCE || Math.abs(firstY - event.getY()) >= TOUCH_TOLERANCE) {
+                                            setPathMove(event, 0);
+                                            mEzDrawThread.setCanPaint(true);
+                                        }
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
                             zoom(event);
                             mClick = GESTURE_DETECTOR_DRAG;
                         }
+
                     }
+
+                    Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + event.getX() + "y: " + event.getY() + " status:" + mStatus);
                     break;
                 case MotionEvent.ACTION_UP:
-                    //获得VelocityTracker对象，并且添加滑动对象
-                    int dx = 0;
-                    int dy = 0;
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.computeCurrentVelocity(100);
-                        dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
-                        dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
-                    }
-                    if (mStatus == GESTURE_DETECTOR_PATH) {
-                        setPathMove(event, dx);
+                    if (mStatus == GESTURE_DETECTOR_PATH && isEdit) {
+                        setPathMove(event, 0);
                         setPathInfo();
                         mEzDrawThread.setCanPaint(true);
+                        return true;
                     }
                     if (mClick == GESTURE_DETECTOR_CLICK) { //点击图案
                         //clickMap(event);
                         mEzDrawThread.setCanPaint(false);
                     } else {
                         //滑动速度
+                        //获得VelocityTracker对象，并且添加滑动对象
+                        int dx = 0;
+                        int dy = 0;
+                        if (mVelocityTracker != null) {
+                            mVelocityTracker.computeCurrentVelocity(100);
+                            dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
+                            dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
+                        }
                         mScroller.startScroll((int) mStartPoint.x, (int) mStartPoint.y, dx, dy, VELOCITY_DURATION);
-                        invalidate(); //触发computeScroll
+                        postInvalidate(); //触发computeScroll
                         //回收VelocityTracker对象
                         if (mVelocityTracker != null) {
                             mVelocityTracker.clear();
-                            mVelocityTracker.recycle();
                         }
                     }
                     mStartDistance = 0;
+                    Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
                     //多指离开
                     mStartDistance = 0;
-                    //回收VelocityTracker对象
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.clear();
-                        mVelocityTracker.recycle();
-                    }
+                    Log.d("--", "55555 onTouch: ACTION_POINTER_UP --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 default:
                     break;

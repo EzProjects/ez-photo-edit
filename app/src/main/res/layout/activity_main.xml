@@ -36,4 +36,21 @@
         android:layout_alignParentBottom="true"
         android:text="撤销" />
 
+    <Button
+        android:id="@+id/btn_edit"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:tag="1"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="编辑" />
+
+    <Button
+        android:id="@+id/btn_change"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="换图" />
+
 </RelativeLayout>
