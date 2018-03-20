@@ -178,12 +178,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      */
     public void clear() {
         if (isEdit) {
-            resetClear();
-            this.mEzBitmapCache.reset();
-            //重新校准位置和放大倍数
-            setScale(true);
-            setPicInit();
-            //绘制 防止不正常显示
+            mPathInfoList.clear();
+            mEzBitmapCache.reset();
             mEzDrawThread.setCanPaint(true);
         }
     }
@@ -222,10 +218,15 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mEzDrawThread.setEzDrawingListener(new EzDrawListener() {
             public void onDraw(Canvas c) {
                 if (c != null && mEzBitmapCache != null && mEzBitmapCache.getBgAndPathBitmap() != null) {
-                    //Log.d("---ss--", " thread onDraw: ----  ");
                     c.drawColor(Color.GRAY);
                     c.scale(mScale, mScale);
-                    c.drawBitmap(mEzBitmapCache.getBgAndPathBitmap(), bx / mScale, by / mScale, mPaint);
+                    try {
+                        if (mEzBitmapCache.getBgAndPathBitmap() != null)
+                            c.drawBitmap(mEzBitmapCache.getBgAndPathBitmap(), bx / mScale, by / mScale, mPaint);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
         });
@@ -278,7 +279,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             float scale1 = newDist / mStartDistance;
             mStartDistance = newDist;
             float tmp = mScale * scale1;//缩放了比例值
-            if (tmp < mScaleFirst * 10 && tmp > mScaleFirst * 0.6) {//放大的倍数范围
+            if (tmp < mScaleFirst * 5 && tmp > mScaleFirst * 0.6) {//放大的倍数范围
                 mScale = tmp;
             } else {
                 return;
@@ -379,13 +380,15 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         if (mEzBitmapCache != null) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
-                    firstX = (int) event.getX();
+                    firstX = (int) event.getX();   //判断点击
                     firstY = (int) event.getY();
-                    mStartPoint.set(event.getX(), event.getY());
                     mStatus = GESTURE_DETECTOR_DRAG;   //绘制路径
                     if (isEdit) {
                         mStatus = GESTURE_DETECTOR_PATH;   //绘制路径
                         setCurrentPathInfo(event);
+                    } else {
+                        //非编辑状态下记录此值
+                        mStartPoint.set(event.getX(), event.getY());
                     }
                     mEzDrawThread.setCanPaint(true);
                     Log.d("--", "11111 onTouch: ACTION_DOWN --- x:" + firstX + " y: " + firstY);

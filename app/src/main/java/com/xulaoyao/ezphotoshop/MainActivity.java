@@ -116,9 +116,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 pesv.clear();
-                //清屏后状态改变
-                btnEdit.setTag("1");
-                btnEdit.setText("编辑");
             }
         });
 

@@ -86,18 +86,9 @@ public class EzBitmapDraw implements IEzBitmapDraw {
     }
 
     public void reset() {
-        if (mPathCanvas != null) {
-            mPathCanvas = null;
-        }
-        if (mEzDrawInfoList != null) {
-            mEzDrawInfoList.clear();
-            mEzDrawInfoList = null;
-        }
-        if (mBitmap != null) {
-            mBitmap.recycle();
-            mBitmap = null;
-        }
-        drawBitmap(mBgBitmap);
+        initBufferBitmap();
+        mPathCanvas.save();
+        mPathCanvas.restore();
     }
 
     /**
