@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
 import com.xulaoyao.ezphotoedit.draw.EzBitmapDraw;
@@ -62,6 +63,14 @@ public class MainActivity extends AppCompatActivity {
 
         pesv.setBitmapData(ezBitmapData);//初始化
 
+
+        Button btn = (Button) findViewById(R.id.btn_cancel);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pesv.undo();
+            }
+        });
 
 
     }

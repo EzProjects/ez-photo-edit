@@ -19,6 +19,7 @@ import java.util.List;
 public class EzBitmapDraw implements IEzBitmapDraw {
 
     private Bitmap mBitmap = null;
+    private Bitmap mBgBitmap = null;
     private Canvas mPathCanvas = null;
     private EzDrawRefreshListener mEzDrawRefreshListener;
 
@@ -32,14 +33,16 @@ public class EzBitmapDraw implements IEzBitmapDraw {
 
     public void drawBitmap(Bitmap bg) {
         if (bg != null) {
+            mBgBitmap = bg;
             //Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
             //根据底图申请缓冲区
-            mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
+            //mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
+            mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.ARGB_8888);//创建内存位图
             //创建空白绘图画布
             mPathCanvas = new Canvas(mBitmap);
             //底图进来后绘制到缓冲区
-            mPathCanvas.drawBitmap(bg, new Rect(0, 0, bg.getWidth(), bg.getHeight()), new Rect(0, 0, bg.getWidth(), bg.getHeight()), null);
-
+            //mPathCanvas.drawBitmap(bg, new Rect(0, 0, bg.getWidth(), bg.getHeight()), new Rect(0, 0, bg.getWidth(), bg.getHeight()), null);
+            initBufferBitmap();
             //监听到手势 改变 图片异步更新 缩放
             //改变背景改变缩放
             if (mEzDrawRefreshListener != null) mEzDrawRefreshListener.onRefresh();
@@ -62,6 +65,22 @@ public class EzBitmapDraw implements IEzBitmapDraw {
         mPathCanvas.restore();
     }
 
+
+    public void undoDrawPath(List<EzPathInfo> pathInfoList) {
+        if (pathInfoList != null) {
+            mEzDrawInfoList = pathInfoList;
+        }
+        if (mEzDrawInfoList != null) {
+            //mBitmap.eraseColor(Color.TRANSPARENT); // // done: 2018/3/20 此方法大图时有延时 效果不理想
+            initBufferBitmap();
+            for (EzPathInfo path : mEzDrawInfoList) {
+                paint.setStrokeWidth(path.strokeWidth);
+                mPathCanvas.drawPath(path.path, paint);
+            }
+        }
+        //mPathCanvas.save();
+        //mPathCanvas.restore();
+    }
 
     /**
      * 新的图片
@@ -104,16 +123,27 @@ public class EzBitmapDraw implements IEzBitmapDraw {
 
     private Paint getPaint() {
         if (paint == null) {
-            paint = new Paint();
-            paint.setColor(Color.RED);
-            paint.setStrokeWidth(10);
+            paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
             paint.setStyle(Paint.Style.STROKE);
+            paint.setFilterBitmap(true);
+            paint.setStrokeJoin(Paint.Join.ROUND);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeWidth(10);
+            paint.setColor(Color.RED);
         }
         return paint;
     }
 
+    private void initBufferBitmap() {
+        if (mPathCanvas != null && mBgBitmap != null)
+            mPathCanvas.drawBitmap(mBgBitmap, new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), null);
+    }
 
     public void destroy() {
+        if (mBgBitmap != null) {
+            mBgBitmap.recycle();
+            mBgBitmap = null;
+        }
         if (mPathCanvas != null) {
             mPathCanvas.restore();
             mPathCanvas = null;

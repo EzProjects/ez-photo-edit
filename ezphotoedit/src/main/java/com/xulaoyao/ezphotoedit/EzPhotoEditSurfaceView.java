@@ -36,6 +36,9 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private static final int GESTURE_DETECTOR_ZOOM = 2;   // 放大
     private static final int GESTURE_DETECTOR_PATH = 3;   // 涂鸦
 
+    //触摸移动开始绘制 阀值
+    private static final float TOUCH_TOLERANCE = 4;
+
     private EzDrawThread mEzDrawThread;//绘制线程
     private SurfaceHolder mSurfaceHolder;
 
@@ -54,7 +57,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private IEzBitmapDraw mIEzBitmapData;
     private EzBitmapDraw mEzBitmapCache;
 
-    //private Path mCurrentPath = new Path();
+
     private EzPathInfo mEzPathInfo;
     private List<EzPathInfo> mPathInfoList = new ArrayList<>();
 
@@ -86,13 +89,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         super.onDetachedFromWindow();
         if (mEzBitmapCache != null)
             mEzBitmapCache.destroy();
-//        if (mPathInfoList != null) {
-//            mPathInfoList.clear();
-//            mPathInfoList = null;
-//        }
-//        if (mCurrentPath != null)
-//            mCurrentPath.reset();
-
     }
 
     @Override
@@ -135,9 +131,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mPathInfoList.clear();
             mPathInfoList = null;
         }
-//        if (mCurrentPath != null)
-//            mCurrentPath.reset();
-
         if (mEzBitmapCache != null)
             mEzBitmapCache.destroy();
 
@@ -157,6 +150,20 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         Log.d("---", "setBitmapCache: cache 图片加载完成后 ");
         //重新校准位置和放大倍数
         if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
+    }
+
+    /**
+     * 撤销
+     */
+    public void undo() {
+        if (mPathInfoList != null && mPathInfoList.size() > 0) {
+            mPathInfoList.remove(mPathInfoList.size() - 1);
+            Log.d("--s-0-", "undo:  size:" + mPathInfoList.size());
+            //mEzBitmapCache.setPathInfoList(mPathInfoList);
+            mEzDrawThread.setCanPaint(true);
+            mEzBitmapCache.undoDrawPath(mPathInfoList);
+            postInvalidate();
+        }
     }
 
 
@@ -275,9 +282,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @return
      */
     private float distanceBetweenFingers(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
+        try {
+            float x = event.getX(0) - event.getX(1);
+            float y = event.getY(0) - event.getY(1);
+            return (float) Math.sqrt(x * x + y * y);
+        } catch (Exception e) {
+            return 1f;
+        }
     }
 
     /**
@@ -298,9 +309,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void setCurrentPathInfo(MotionEvent event) {
         PointF pointF = getMotionEventPointInBgBitmapPointF(event);
         //log(pointF.x, pointF.y);
-        //mCurrentPath = null;
-        //mCurrentPath = new Path();
-        //EzPathInfo mEzPathInfo = new EzPathInfo(mCurrentPath);
         if (mEzPathInfo != null)
             mEzPathInfo.clear();
         mEzPathInfo = null;
@@ -308,13 +316,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mEzPathInfo.setScale(mScale);
         mPathInfoList.add(mEzPathInfo);
         mEzPathInfo.getPath().moveTo(pointF.x, pointF.y);
-        //mCurrentPath.moveTo(pointF.x, pointF.y);
     }
 
     private void setPathMove(MotionEvent event, float velocity) {
         PointF pointF = getMotionEventPointInBgBitmapPointF(event);
         //log(pointF.x, pointF.y);
-        //mCurrentPath.lineTo(pointF.x, pointF.y);
         if (mEzPathInfo != null) {
             mEzPathInfo.setVelocity(velocity);
             mEzPathInfo.addPoint(pointF);
@@ -373,20 +379,25 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             zoom(event);
                         }
                     } else {
-                        mVelocityTracker.computeCurrentVelocity(100);
-                        float dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
+                        float dx = 0;
+                        if (mVelocityTracker != null) {
+                            mVelocityTracker.computeCurrentVelocity(100);
+                            dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
+                        }
                         if (mStatus == GESTURE_DETECTOR_PATH) {
                             if (event.getPointerCount() == 1) {
-                                setPathMove(event, dx);
-                                mEzDrawThread.setCanPaint(true);
+                                if (Math.abs(firstX - event.getX()) >= TOUCH_TOLERANCE || Math.abs(firstY - event.getY()) >= TOUCH_TOLERANCE) {
+                                    setPathMove(event, dx);
+                                    mEzDrawThread.setCanPaint(true);
+                                }
                                 return true;
                             }
                         } else {
-                            if (event.getPointerCount() == 1) {
-                                setPathMove(event, dx);
-                                mEzDrawThread.setCanPaint(true);
-                                return true;
-                            }
+//                            if (event.getPointerCount() == 1) {
+//                                setPathMove(event, dx);
+//                                mEzDrawThread.setCanPaint(true);
+//                                return true;
+//                            }
                             zoom(event);
                             mClick = GESTURE_DETECTOR_DRAG;
                         }
