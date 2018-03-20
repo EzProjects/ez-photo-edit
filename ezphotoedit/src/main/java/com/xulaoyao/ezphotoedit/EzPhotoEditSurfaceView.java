@@ -18,7 +18,6 @@ import android.widget.Scroller;
 import com.xulaoyao.ezphotoedit.draw.EzBitmapDraw;
 import com.xulaoyao.ezphotoedit.listener.EzDrawListener;
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
-import com.xulaoyao.ezphotoedit.listener.IEzBitmapDraw;
 import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
 import java.util.ArrayList;
@@ -55,7 +54,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private float mScale, mScaleFirst; //放大倍数
     private float bx, by; //图案初始坐标
 
-    private IEzBitmapDraw mIEzBitmapData;
     private EzBitmapDraw mEzBitmapCache;
 
 
@@ -117,8 +115,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         mScreenWidth = this.getWidth();
         mScreenHeight = this.getHeight();
-        if (mIEzBitmapData != null) setBitmapDataInit();
-        startDrawThreadRun();
     }
 
     @Override
@@ -147,18 +143,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
 
     //公有方法
-    public void init(IEzBitmapDraw data) {
-        this.mIEzBitmapData = data;
-    }
-
-    public void start(EzBitmapDraw cache) {
-        this.mIEzBitmapData = cache;
-        this.mEzBitmapCache = cache;
-        //重新校准位置和放大倍数
-        if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
-    }
-
-    public void reset(Bitmap bgBitmap) {
+    public void load(Bitmap bgBitmap) {
+        if (isEdit) {
+            return;
+        }
         resetClear();
         this.mEzBitmapCache.drawBitmap(bgBitmap);
         //重新校准位置和放大倍数
@@ -167,6 +155,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         //绘制 防止不正常显示
         mEzDrawThread.setCanPaint(true);
     }
+
 
     /**
      * 撤销
@@ -182,6 +171,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mEzBitmapCache.undoDrawPath(mPathInfoList);
             postInvalidate();
         }
+    }
+
+    /**
+     * 清屏
+     */
+    public void clear() {
+
     }
 
     /**
@@ -204,6 +200,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mSurfaceHolder = getHolder();
         mScroller = new Scroller(mContext);   // 滑动
         mPaint = new Paint();
+        mEzBitmapCache = new EzBitmapDraw();
+        //注册刷新回调
+        registerBitmapRefreshListener();
+        startDrawThreadRun();
     }
 
     /**
@@ -213,11 +213,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mEzDrawThread = new EzDrawThread(mSurfaceHolder);
         mEzDrawThread.setEzDrawingListener(new EzDrawListener() {
             public void onDraw(Canvas c) {
-                if (c != null && mIEzBitmapData != null && mIEzBitmapData.getBgAndPathBitmap() != null) {
+                if (c != null && mEzBitmapCache != null && mEzBitmapCache.getBgAndPathBitmap() != null) {
                     //Log.d("---ss--", " thread onDraw: ----  ");
                     c.drawColor(Color.GRAY);
                     c.scale(mScale, mScale);
-                    c.drawBitmap(mIEzBitmapData.getBgAndPathBitmap(), bx / mScale, by / mScale, mPaint);
+                    c.drawBitmap(mEzBitmapCache.getBgAndPathBitmap(), bx / mScale, by / mScale, mPaint);
                 }
             }
         });
@@ -231,8 +231,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @param changeFirst
      */
     private void setScale(boolean changeFirst) {
-        float scaleWidth = mScreenWidth / mIEzBitmapData.getBgAndPathBitmap().getWidth();
-        float scaleHeight = mScreenHeight / mIEzBitmapData.getBgAndPathBitmap().getHeight();
+        float scaleWidth = mScreenWidth / mEzBitmapCache.getBgAndPathBitmap().getWidth();
+        float scaleHeight = mScreenHeight / mEzBitmapCache.getBgAndPathBitmap().getHeight();
         mScale = scaleWidth > scaleHeight ? scaleHeight : scaleWidth;
         if (changeFirst) mScaleFirst = mScale;
     }
@@ -240,8 +240,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     /**
      * 刷新合成 bitmap 的数据
      */
-    private void setBitmapDataInit() {
-        mIEzBitmapData.setDrawRefreshListener(new EzDrawRefreshListener() {
+    private void registerBitmapRefreshListener() {
+        mEzBitmapCache.setDrawRefreshListener(new EzDrawRefreshListener() {
             @Override
             public void onRefresh() {
                 setScale(true);
@@ -253,8 +253,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private void setPicInit() {
         if (bx != 0 && by != 0) return;
         //图片初始状态
-        mPicWidth = mIEzBitmapData.getBgAndPathBitmap().getWidth() * mScale;
-        mPicHeight = mIEzBitmapData.getBgAndPathBitmap().getHeight() * mScale;
+        mPicWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScale;
+        mPicHeight = mEzBitmapCache.getBgAndPathBitmap().getHeight() * mScale;
         //初始坐标
         bx = (mScreenWidth - mPicWidth) / 2;
         by = (mScreenHeight - mPicHeight) / 2;
@@ -368,7 +368,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         //此处是批改状态
-        if (mIEzBitmapData != null) {
+        if (mEzBitmapCache != null) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
                     firstX = (int) event.getX();

@@ -8,14 +8,13 @@ import android.view.View;
 import android.widget.Button;
 
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
-import com.xulaoyao.ezphotoedit.draw.EzBitmapDraw;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EzBitmapDraw ezBitmapData = new EzBitmapDraw();
+    //private EzBitmapDraw ezBitmapData = new EzBitmapDraw();
 
     private Bitmap bmp;
 
@@ -25,8 +24,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
-
-        pesv.init(ezBitmapData);//初始化
 
         //延迟展区区域数据加载
         new Thread(new Runnable() {
@@ -43,20 +40,15 @@ public class MainActivity extends AppCompatActivity {
                     InputStream inputStream = getAssets().open("111.jpg");
                     //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
                     bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-                    ezBitmapData.drawBitmap(bmp);//设置图片
+                    //ezBitmapData.drawBitmap(bmp);//设置图片
+                    pesv.load(bmp);//初始化
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
-                //adapter.setBmp(bmp);//设置图片
                 bmp = null;
-                //getUnitList();//设置数组
-                //adapter.setList(unitList);//设置数组
-                //ezBitmapData.refreshData();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pesv.start(ezBitmapData);//初始化
                         findViewById(R.id.tip).setVisibility(View.GONE);
                     }
                 });
@@ -102,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                             InputStream inputStream = getAssets().open("jj.jpeg");
                             bmp = BitmapFactory.decodeStream(inputStream);//图片资源
                             //ezBitmapData.drawBitmap(bmp);//设置图片
-                            pesv.reset(bmp);
+                            pesv.load(bmp);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

@@ -18,6 +18,4 @@ public interface IEzBitmapDraw {
 
     void setDrawRefreshListener(EzDrawRefreshListener listener);
 
-
-
 }
