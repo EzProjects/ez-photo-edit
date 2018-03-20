@@ -18,6 +18,7 @@ import android.widget.Scroller;
 import com.xulaoyao.ezphotoedit.cache.EzBitmapDrawBuffer;
 import com.xulaoyao.ezphotoedit.listener.EzDrawListener;
 import com.xulaoyao.ezphotoedit.listener.EzDrawRefreshListener;
+import com.xulaoyao.ezphotoedit.listener.LoadBitmapWorkerListener;
 import com.xulaoyao.ezphotoedit.listener.PhotoEditListener;
 import com.xulaoyao.ezphotoedit.model.EzPathInfo;
 
@@ -168,6 +169,27 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mEzDrawThread.setCanPaint(true);
     }
 
+    public void load(final String path) {
+        if (null != path) {
+            new EzLoadBitmapWorkerTask(new LoadBitmapWorkerListener() {
+                @Override
+                public void onPostExecute(Bitmap bgBitmap) {
+                    if (bgBitmap != null) {
+                        load(bgBitmap);
+                        if (mPhotoEditListener != null) {
+                            mPhotoEditListener.info(200, "加载完成");
+                        }
+                    } else {
+                        if (mPhotoEditListener != null) {
+                            mPhotoEditListener.info(400, "加载失败");
+                        }
+                    }
+                    Log.d("- work -", "onPostExecute: ------ bitmap: 返回");
+                }
+            }).execute(path);
+        }
+    }
+
 
     /**
      * 撤销
@@ -214,6 +236,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void setEdit(boolean edit) {
         isEdit = edit;
     }
+
+    public boolean isIsHandWriting() {
+        return mEzPathInfo != null && mEzPathInfo.mPoints != null;
+    }
+
 
     /**
      * 设置监听

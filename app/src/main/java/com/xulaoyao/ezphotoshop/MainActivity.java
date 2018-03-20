@@ -12,6 +12,8 @@ import android.widget.Toast;
 import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
 import com.xulaoyao.ezphotoedit.listener.PhotoEditListener;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,38 +34,52 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void info(int code, String msg) {
                 Log.d("---", "info: " + msg);
+                if (code == 200){
+                    findViewById(R.id.tip).setVisibility(View.GONE);
+                }
                 Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
         //延迟展区区域数据加载
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                }
-                //背景图
-                BitmapFactory.Options opt = new BitmapFactory.Options();
-                opt.inPreferredConfig = Bitmap.Config.RGB_565;
-                try {
-                    InputStream inputStream = getAssets().open("111.jpg");
-                    //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
-                    bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-                    //ezBitmapData.drawBitmap(bmp);//设置图片
-                    pesv.load(bmp);//初始化
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                bmp = null;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        findViewById(R.id.tip).setVisibility(View.GONE);
-                    }
-                });
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Thread.sleep(200);
+//                } catch (InterruptedException e) {
+//                }
+//                //背景图
+//                BitmapFactory.Options opt = new BitmapFactory.Options();
+//                opt.inPreferredConfig = Bitmap.Config.RGB_565;
+//                try {
+//                    InputStream inputStream = getAssets().open("111.jpg");
+//                    //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
+//                    bmp = BitmapFactory.decodeStream(inputStream);//图片资源
+//                    //ezBitmapData.drawBitmap(bmp);//设置图片
+//                    pesv.load(bmp);//初始化
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                bmp = null;
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        findViewById(R.id.tip).setVisibility(View.GONE);
+//                    }
+//                });
+//            }
+//        }).start();
+
+        try {
+            String name = "111.jpg";
+            copy(name, getFilesDir().getAbsolutePath(), name);
+            String path = getFilesDir().getAbsolutePath() + File.separator + name;
+            Log.d("=-=", "onCreate: " + path);
+            //InputStream inputStream = getAssets().open("jj.jpeg");
+            pesv.load(path);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
         Button btn = (Button) findViewById(R.id.btn_cancel);
@@ -177,5 +193,27 @@ public class MainActivity extends AppCompatActivity {
 //        mCurrentPathInfo = new EzDrawPath(x, y, 5, Color.RED);
 //    }
 
+
+    public void copy(String ASSETS_NAME, String savePath, String saveName) {
+        String filename = savePath + File.separator + saveName;
+        File dir = new File(savePath);
+        // 如果目录不中存在，创建这个目录
+        if (!dir.exists()) dir.mkdir();
+        try {
+            if (!(new File(filename)).exists()) {
+                InputStream is = getAssets().open(ASSETS_NAME);
+                FileOutputStream fos = new FileOutputStream(filename);
+                byte[] buffer = new byte[7168];
+                int count = 0;
+                while ((count = is.read(buffer)) > 0) {
+                    fos.write(buffer, 0, count);
+                }
+                fos.close();
+                is.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }
