@@ -147,13 +147,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
 
     //公有方法
-    public void setBitmapData(IEzBitmapDraw data) {
+    public void init(IEzBitmapDraw data) {
         this.mIEzBitmapData = data;
     }
 
-    public void setBitmapCache(EzBitmapDraw cache) {
+    public void start(EzBitmapDraw cache) {
+        this.mIEzBitmapData = cache;
         this.mEzBitmapCache = cache;
-        Log.d("---", "setBitmapCache: cache 图片加载完成后 ");
         //重新校准位置和放大倍数
         if (mScreenHeight > 0 && mScreenWidth > 0) setBitmapDataInit();
     }
@@ -164,6 +164,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         //重新校准位置和放大倍数
         setScale(true);
         setPicInit();
+        //绘制 防止不正常显示
+        mEzDrawThread.setCanPaint(true);
     }
 
     /**
@@ -471,7 +473,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     }
 
     private void resetClear() {
-        //mEzDrawThread.setCanPaint(false);
+        mEzDrawThread.setCanPaint(false);
         //mEzDrawThread.setThreadRun(false);
         //mEzDrawThread.interrupt();
         // mEzDrawThread = null;

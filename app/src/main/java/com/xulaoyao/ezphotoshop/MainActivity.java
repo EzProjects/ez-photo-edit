@@ -26,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
 
+        pesv.init(ezBitmapData);//初始化
+
         //延迟展区区域数据加载
         new Thread(new Runnable() {
             @Override
@@ -54,14 +56,12 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pesv.setBitmapCache(ezBitmapData);//初始化
+                        pesv.start(ezBitmapData);//初始化
                         findViewById(R.id.tip).setVisibility(View.GONE);
                     }
                 });
             }
         }).start();
-
-        pesv.setBitmapData(ezBitmapData);//初始化
 
 
         Button btn = (Button) findViewById(R.id.btn_cancel);
