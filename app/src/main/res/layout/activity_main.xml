@@ -45,13 +45,7 @@
         android:tag="1"
         android:text="编辑" />
 
-    <Button
-        android:id="@+id/btn_change"
-        android:layout_width="60dp"
-        android:layout_height="48dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:text="换图" />
+
 
     <Button
         android:id="@+id/btn_rest"
@@ -60,5 +54,20 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:text="重置" />
+
+    <Button
+        android:id="@+id/btn_change"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:text="换图" />
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:text="保存" />
 
 </RelativeLayout>

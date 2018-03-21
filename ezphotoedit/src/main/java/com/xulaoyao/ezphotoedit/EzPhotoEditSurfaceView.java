@@ -100,6 +100,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         super.onDetachedFromWindow();
         if (mEzBitmapCache != null)
             mEzBitmapCache.destroy();
+        if (mEzDrawThread != null) {
+            mEzDrawThread.setCanPaint(false);
+            mEzDrawThread.interrupt();
+            mEzDrawThread = null;
+        }
     }
 
     @Override
@@ -243,6 +248,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         return mEzPathInfo != null && mEzPathInfo.mPoints != null;
     }
 
+    public Bitmap getHandwritingBitmap() {
+        if (mEzBitmapCache != null)
+            return mEzBitmapCache.getBgAndPathBitmap();
+        return getDrawingCache();
+    }
 
     /**
      * 设置监听
@@ -257,8 +267,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     private void init() {
         this.setOnTouchListener(this);
-        getHolder().addCallback(this);
         mSurfaceHolder = getHolder();
+        getHolder().addCallback(this);
         mScroller = new Scroller(mContext);   // 滑动
         mPaint = new Paint();
         mEzBitmapCache = new EzBitmapDrawBuffer();
@@ -499,7 +509,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         xVelocity = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
                         yVelocity = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
                     }
-                    log(xVelocity, yVelocity);
+                    //log(xVelocity, yVelocity);
                     if (!isEdit && event.getPointerCount() > 2) {
                         //翻页
                         if (xVelocity > 3000) {

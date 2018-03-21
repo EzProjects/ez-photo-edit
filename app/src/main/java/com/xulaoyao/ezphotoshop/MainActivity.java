@@ -3,6 +3,7 @@ package com.xulaoyao.ezphotoshop;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,7 @@ import com.xulaoyao.ezphotoedit.EzPhotoEditSurfaceView;
 import com.xulaoyao.ezphotoedit.listener.PhotoEditListener;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -158,6 +160,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        Button btnSave = (Button) findViewById(R.id.btn_save);
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Bitmap bitmap = pesv.getHandwritingBitmap();
+                if (bitmap != null) {
+                    saveBitmapToFile(bitmap);
+                } else {
+                    Log.d("==-=-", "onClick: --- get bitmap is null!");
+                }
+            }
+        });
+
 
     }
 
@@ -229,4 +244,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void saveBitmapToFile(Bitmap btImage) {
+        File file = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(file);
+            btImage.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            Log.d("save", "saveBitmapToFile: ___________保存的__sd___ +" + Environment.getExternalStorageDirectory() + "下_______________________");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.flush();
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (btImage != null) {
+                btImage.recycle();
+                btImage = null;
+            }
+        }
+
+        Toast.makeText(MainActivity.this, "保存已经至" + Environment.getExternalStorageDirectory() + "下", Toast.LENGTH_SHORT).show();
+    }
 }
