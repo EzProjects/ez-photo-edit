@@ -3,7 +3,6 @@ package com.xulaoyao.ezphotoshop;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -245,12 +244,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveBitmapToFile(Bitmap btImage) {
-        File file = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+        File file = new File(getCacheDir(), System.currentTimeMillis() + ".jpg");
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(file);
             btImage.compress(Bitmap.CompressFormat.JPEG, 90, out);
-            Log.d("save", "saveBitmapToFile: ___________保存的__sd___ +" + Environment.getExternalStorageDirectory() + "下_______________________");
+            Log.d("save", "saveBitmapToFile:保存的在sd +" + getCacheDir() + " 目录下");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -267,7 +266,6 @@ public class MainActivity extends AppCompatActivity {
                 btImage = null;
             }
         }
-
-        Toast.makeText(MainActivity.this, "保存已经至" + Environment.getExternalStorageDirectory() + "下", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "保存已经至" + getCacheDir() + "下", Toast.LENGTH_SHORT).show();
     }
 }
