@@ -288,6 +288,9 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             }
         });
         mEzDrawThread.start();
+        //暂时不运行，init 时bg bitmap
+        // 还未加载完成 load 完成后 设置为 true
+        mEzDrawThread.setCanPaint(false);
     }
 
 

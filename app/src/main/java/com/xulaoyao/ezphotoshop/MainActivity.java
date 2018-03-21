@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
 
         pesv.setPhotoEditListener(new PhotoEditListener() {
@@ -155,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 pesv.clear();
             }
         });
+
 
 
     }
