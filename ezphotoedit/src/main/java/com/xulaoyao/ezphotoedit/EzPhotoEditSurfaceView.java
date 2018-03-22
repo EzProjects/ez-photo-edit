@@ -86,9 +86,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private long lastMultiPointerTime;    // 记录多点触控的时间
     private boolean isFlingPage = false;  //翻页状态
     private float mLastDistance = -1;    //记录在双指平移还是缩放时的
+    private boolean isLoadingBgImage = false;  //load 图片时不能使用左右滑动功能
 
 
     private PhotoEditListener mPhotoEditListener;
+
+    private EzLoadBitmapWorkerTask mEzLoadBitmapWorkerTask;
 
     public EzPhotoEditSurfaceView(Context context) {
         this(context, null);
@@ -114,6 +117,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mEzDrawThread.interrupt();
             mEzDrawThread = null;
         }
+        if (mEzLoadBitmapWorkerTask != null) {
+            mEzLoadBitmapWorkerTask.cancel(true);
+            mEzLoadBitmapWorkerTask = null;
+        }
     }
 
     @Override
@@ -128,7 +135,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mStartPoint = currentPoint;
             bx += offsetX;
             by += offsetY;
-            log(bx, by);
+            //log(bx, by);
             postInvalidate(); //相当于递归computeScroll();目的是触发computeScroll
         } else if (mStatus == GESTURE_DETECTOR_DRAG && mClick == GESTURE_DETECTOR_DRAG) {
             mEzDrawThread.setCanPaint(false);
@@ -162,6 +169,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mVelocityTracker.clear();
             mVelocityTracker.recycle();
         }
+        if (mEzLoadBitmapWorkerTask != null) {
+            mEzLoadBitmapWorkerTask.cancel(true);
+            mEzLoadBitmapWorkerTask = null;
+        }
 
         mEzDrawThread.setThreadRun(false);
         mEzDrawThread.interrupt();  //中断线程
@@ -171,8 +182,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     //公有方法
     public void load(Bitmap bgBitmap) {
-        resetClear();
+        if (mPicWidth != 0 && mPicHeight != 0) {
+            resetClear();
+        }
         this.mEzBitmapCache.drawBitmap(bgBitmap);
+        isLoadingBgImage = false;  //加载完成后可操作
         //重新校准位置和放大倍数
         setScale(true);
         setPicInit();
@@ -182,8 +196,17 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     public void load(final String path) {
         if (null != path) {
+            isLoadingBgImage = true;  //加载前不能操作
+            if (mPicWidth != 0 && mPicHeight != 0) {
+                resetClear();
+            }
+            mEzDrawThread.setCanPaint(true);
             mEzDrawThread.setCanPaint(false);
-            new EzLoadBitmapWorkerTask(new LoadBitmapWorkerListener() {
+            if (mEzLoadBitmapWorkerTask != null) {
+                mEzLoadBitmapWorkerTask.cancel(true);
+                mEzLoadBitmapWorkerTask = null;
+            }
+            mEzLoadBitmapWorkerTask = new EzLoadBitmapWorkerTask(new LoadBitmapWorkerListener() {
                 @Override
                 public void onPostExecute(Bitmap bgBitmap) {
                     if (bgBitmap != null) {
@@ -198,7 +221,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     }
                     Log.d("- work -", "onPostExecute: ------ bitmap: 返回");
                 }
-            }).execute(path);
+            });
+            mEzLoadBitmapWorkerTask.execute(path);
         }
     }
 
@@ -463,6 +487,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
+        if (isLoadingBgImage)
+            return true;
         if (mVelocityTracker == null) {
             mVelocityTracker = VelocityTracker.obtain();
         } else {
@@ -514,12 +540,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         yVelocity = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
                     }
                     //log(xVelocity, yVelocity);
-                    if (!isEdit && event.getPointerCount() > 2) {
+                    if (!isEdit && event.getPointerCount() == 1 && mScale == mScaleFirst) {
                         //翻页
-                        if (xVelocity > 3000) {
+                        if (xVelocity > 300) {
                             if (mPhotoEditListener != null && !isFlingPage) {
                                 mPhotoEditListener.next();
-                                isFlingPage = true;
                             }
                             return true;
                         }
@@ -618,6 +643,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     mStartDistance = 0;
                     mLastDistance = -1;
                     mClick = 0;
+                    resetZoomToFirstScale();
                     //Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getRawX() + "y: " + event.getRawY());
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
@@ -644,10 +670,17 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         //mEzDrawThread.setThreadRun(false);
         //mEzDrawThread.interrupt();
         // mEzDrawThread = null;
-//        if (mEzBitmapCache != null)
-//            mEzBitmapCache.destroy();
         if (mEzPathInfo != null)
             mEzPathInfo.clear();
+
+        //reload 时背景清空，防止内存溢出
+        if (mEzBitmapCache != null) {
+            mEzBitmapCache.clearBgBitmap();
+        }
+        if (mEzLoadBitmapWorkerTask != null) {
+            mEzLoadBitmapWorkerTask.cancel(true);
+            mEzLoadBitmapWorkerTask = null;
+        }
 //        if (mIEzBitmapData != null)
 //            mIEzBitmapData = null;
         isEdit = false;
@@ -658,6 +691,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         mScale = 1;
         mScaleFirst = 1;
         mStartPoint.set(0, 0);
+        mLastDistance = 0;
+        isFlingPage = false;
         bx = 0;
         by = 0;
         mPicWidth = 0;
@@ -674,6 +709,28 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         Log.d("-log-", "--- screen: width:" + mScreenWidth + " height:" + mScreenHeight);
         Log.d("-log-", "--- image: width:" + mPicWidth + " height:" + mPicHeight);
         Log.d("-log-", "--- 偏移: bx:" + bx + " by:" + by);
+    }
+
+    /**
+     * 判断缩小界面
+     * 返回与 view 大小匹配的比例
+     * 使用阻尼效果
+     */
+    private void resetZoomToFirstScale() {
+        if (!isEdit) {
+            if (mScale < mScaleFirst) {
+//                mPicWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScaleFirst;
+//                mPicHeight = mEzBitmapCache.getBgAndPathBitmap().getHeight() * mScaleFirst;
+//                //初始坐标
+//                float mFirstScaleX = (mScreenWidth - mPicWidth) / 2;
+//                float mFirstScaleY = (mScreenHeight - mPicHeight) / 2;
+//                mScroller.startScroll((int) mFirstScaleX, (int) mFirstScaleY, (int) Math.abs(mFirstScaleX - mStartPoint.x), (int)Math.abs (mFirstScaleY- mStartPoint.y), 500);
+                mScale = mScaleFirst;
+                bx = 0;
+                by = 0;
+                setPicInit();
+            }
+        }
     }
 
 }

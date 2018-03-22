@@ -28,6 +28,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        String name = "111.jpg";
+        copy(name, getFilesDir().getAbsolutePath(), name);
+        final String path = getFilesDir().getAbsolutePath() + File.separator + name;
+
+        String name2 = "jj.jpeg";
+        copy(name2, getFilesDir().getAbsolutePath(), name2);
+        final String path2 = getFilesDir().getAbsolutePath() + File.separator + name2;
+
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
 
@@ -43,13 +51,18 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void next() {
-                Log.d("=-", "next: -----------------=---------=------------------=------------=-------");
-                Toast.makeText(MainActivity.this, "next", Toast.LENGTH_SHORT).show();
+                findViewById(R.id.tip).setVisibility(View.VISIBLE);
+                Log.d("=-", "next: -----------------=---------=------------------=------------=-------》");
+                //Toast.makeText(MainActivity.this, "next", Toast.LENGTH_SHORT).show();
+                pesv.load(path2);
             }
 
             @Override
             public void previous() {
-                Toast.makeText(MainActivity.this, "previous", Toast.LENGTH_SHORT).show();
+                findViewById(R.id.tip).setVisibility(View.VISIBLE);
+                Log.d("=-", "previous: 《-----------------=---------=------------------=------------=-------");
+                //Toast.makeText(MainActivity.this, "previous", Toast.LENGTH_SHORT).show();
+                pesv.load(path);
             }
         });
         //延迟展区区域数据加载
@@ -83,9 +96,7 @@ public class MainActivity extends AppCompatActivity {
 //        }).start();
 
         try {
-            String name = "111.jpg";
-            copy(name, getFilesDir().getAbsolutePath(), name);
-            String path = getFilesDir().getAbsolutePath() + File.separator + name;
+
             Log.d("=-=", "onCreate: " + path);
             //InputStream inputStream = getAssets().open("jj.jpeg");
             pesv.load(path);
@@ -122,11 +133,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 findViewById(R.id.tip).setVisibility(View.VISIBLE);
-                String name = "jj.jpeg";
-                copy(name, getFilesDir().getAbsolutePath(), name);
-                String path = getFilesDir().getAbsolutePath() + File.separator + name;
-                Log.d("=-=", "onCreate: " + path);
-                pesv.load(path);
+                Log.d("=-=", "onCreate: " + path2);
+                pesv.load(path2);
 //                new Thread(new Runnable() {
 //                    @Override
 //                    public void run() {

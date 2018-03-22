@@ -39,7 +39,11 @@ public class EzBitmapDrawBuffer implements IEzBitmapDrawCache {
             Log.d("--ss--", "drawBitmap: bg w:" + bg.getWidth() + " h:" + bg.getHeight());
             //根据底图申请缓冲区
             //mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
-            mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.ARGB_8888);//创建内存位图
+            if (bg.getWidth() > 5000 || bg.getHeight() > 6000) {
+                mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.RGB_565);//创建内存位图
+            } else {
+                mBitmap = Bitmap.createBitmap(bg.getWidth(), bg.getHeight(), Bitmap.Config.ARGB_8888);//创建内存位图
+            }
             //创建空白绘图画布
             mPathCanvas = new Canvas(mBitmap);
             //底图进来后绘制到缓冲区
@@ -92,6 +96,16 @@ public class EzBitmapDrawBuffer implements IEzBitmapDrawCache {
     }
 
     /**
+     * 设置背景图为null
+     */
+    public void clearBgBitmap() {
+        if (mBgBitmap != null)
+            this.mBgBitmap.recycle();
+        this.mBgBitmap = null;
+        initBufferBitmap();
+    }
+
+    /**
      * 新的图片
      * 背景图 + path 合成的图片
      *
@@ -119,7 +133,6 @@ public class EzBitmapDrawBuffer implements IEzBitmapDrawCache {
     }
 
 
-
     public List<EzPathInfo> getPathInfoList() {
         return mEzDrawInfoList;
     }
@@ -144,8 +157,16 @@ public class EzBitmapDrawBuffer implements IEzBitmapDrawCache {
     }
 
     private void initBufferBitmap() {
-        if (mPathCanvas != null && mBgBitmap != null)
-            mPathCanvas.drawBitmap(mBgBitmap, new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), null);
+        if (mPathCanvas != null) {
+            if (mBgBitmap != null) {
+                mPathCanvas.drawBitmap(mBgBitmap, new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), new Rect(0, 0, mBgBitmap.getWidth(), mBgBitmap.getHeight()), null);
+            } else {
+                mBitmap = Bitmap.createBitmap(600, 800, Bitmap.Config.ARGB_8888);//创建内存位图
+                //创建空白绘图画布
+                mPathCanvas = new Canvas(mBitmap);
+                mPathCanvas.drawColor(Color.GRAY);
+            }
+        }
     }
 
     public void destroy() {

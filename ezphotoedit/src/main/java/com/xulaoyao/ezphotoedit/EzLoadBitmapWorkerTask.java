@@ -3,6 +3,7 @@ package com.xulaoyao.ezphotoedit;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.xulaoyao.ezphotoedit.listener.LoadBitmapWorkerListener;
 
@@ -35,4 +36,14 @@ public class EzLoadBitmapWorkerTask extends AsyncTask<String, Void, Bitmap> {
         if (mLoadBitmapWorkerListener != null)
             mLoadBitmapWorkerListener.onPostExecute(bitmap);
     }
+
+    @Override
+    protected void onCancelled(Bitmap bitmap) {
+        if (bitmap != null) {
+            bitmap.recycle();
+            bitmap = null;
+        }
+        super.onCancelled(bitmap);
+    }
+
 }
