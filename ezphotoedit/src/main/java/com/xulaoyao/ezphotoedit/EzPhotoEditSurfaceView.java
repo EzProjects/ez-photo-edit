@@ -526,7 +526,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //多指按下
                     mStartDistance = distanceBetweenFingers(event); //初始距离
                     mEzDrawThread.setCanPaint(true);
-                    Log.d("--", "2222222222 onTouch: ACTION_POINTER_DOWN --- x:" + event.getX() + "y: " + event.getY());
+                    //Log.d("--", "2222222222 onTouch: ACTION_POINTER_DOWN --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 case MotionEvent.ACTION_MOVE:
                     //滑动速度
@@ -557,7 +557,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         }
                     }
                     if (!isEdit && isFlingPage) {
-                        Log.d("=---", "onTouch: --- isFlingPage:" + isFlingPage);
+                        //Log.d("=---", "onTouch: --- isFlingPage:" + isFlingPage);
                         return true;
                     }
                     if (!isEdit && event.getPointerCount() == 1 && (Math.abs(firstX - centerBetweenFingers(event).x) < 3 || Math.abs(firstY - centerBetweenFingers(event).y) < 3)) {
@@ -611,7 +611,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             }
                         }
                     }
-                    Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + centerBetweenFingers(event).x + "y: " + centerBetweenFingers(event).y + " \n         -------  start point x:" + mStartPoint.x + " y:" + mStartPoint.y + " ******************** ---> status:" + mStatus + " getPointerCount:" + event.getPointerCount());
+                    //Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + centerBetweenFingers(event).x + "y: " + centerBetweenFingers(event).y + " \n         -------  start point x:" + mStartPoint.x + " y:" + mStartPoint.y + " ******************** ---> status:" + mStatus + " getPointerCount:" + event.getPointerCount());
                     break;
                 case MotionEvent.ACTION_UP:
                     isFlingPage = false;
@@ -635,7 +635,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                                 dx = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
                                 dy = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
                             }
-                            Log.d("--mVelocityTracker ", " dx , dy -> ");
+                            //Log.d("--mVelocityTracker ", " dx , dy -> ");
                             //log(dx, dy);
                             mScroller.abortAnimation();
                             mScroller.startScroll((int) mStartPoint.x, (int) mStartPoint.y, dx, dy, VELOCITY_DURATION);
@@ -646,7 +646,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     mLastDistance = -1;
                     mClick = 0;
                     resetZoomToFirstScale();
-                    Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getRawX() + "y: " + event.getRawY());
+                    //Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getRawX() + "y: " + event.getRawY());
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
                     isMultiPointerToOneUp = true;  //单指模式
@@ -721,7 +721,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * 使用阻尼效果
      */
     private void resetZoomToFirstScale() {
-        Log.d("-=-=-=-", "resetZoomToFirstScale: mScale:" + mScale + " | " + mScaleFirst);
+        //Log.d("-=-=-=-", "resetZoomToFirstScale: mScale:" + mScale + " | " + mScaleFirst);
         if (!isEdit) {
             if (mScale < mScaleFirst) {
 //                mPicWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScaleFirst;
