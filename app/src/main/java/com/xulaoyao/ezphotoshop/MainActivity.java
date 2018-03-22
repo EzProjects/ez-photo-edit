@@ -1,7 +1,6 @@
 package com.xulaoyao.ezphotoshop;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -123,30 +122,35 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 findViewById(R.id.tip).setVisibility(View.VISIBLE);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //背景图
-                        BitmapFactory.Options opt = new BitmapFactory.Options();
-                        opt.inPreferredConfig = Bitmap.Config.RGB_565;
-                        try {
-                            InputStream inputStream = getAssets().open("jj.jpeg");
-                            bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-                            //ezBitmapData.drawBitmap(bmp);//设置图片
-                            pesv.load(bmp);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        //bmp.recycle();
-                        bmp = null;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                findViewById(R.id.tip).setVisibility(View.GONE);
-                            }
-                        });
-                    }
-                }).start();
+                String name = "jj.jpeg";
+                copy(name, getFilesDir().getAbsolutePath(), name);
+                String path = getFilesDir().getAbsolutePath() + File.separator + name;
+                Log.d("=-=", "onCreate: " + path);
+                pesv.load(path);
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        //背景图
+//                        BitmapFactory.Options opt = new BitmapFactory.Options();
+//                        opt.inPreferredConfig = Bitmap.Config.RGB_565;
+//                        try {
+//                            InputStream inputStream = getAssets().open("jj.jpeg");
+//                            bmp = BitmapFactory.decodeStream(inputStream);//图片资源
+//                            //ezBitmapData.drawBitmap(bmp);//设置图片
+//                            pesv.load(bmp);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        //bmp.recycle();
+//                        bmp = null;
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                findViewById(R.id.tip).setVisibility(View.GONE);
+//                            }
+//                        });
+//                    }
+//                }).start();
             }
         });
 

@@ -134,7 +134,7 @@ public class EzPathInfo {
                 float tt = t * t;
                 float ttt = tt * t;
                 // Set the incremental stroke width and draw.
-                strokeWidth = (mLastWidth + ttt * widthDelta);
+                //strokeWidth = (mLastWidth + ttt * widthDelta);
             }
 
             // The new width is a function of the velocity. Higher velocities

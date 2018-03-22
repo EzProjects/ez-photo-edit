@@ -29,16 +29,22 @@ import java.util.List;
  * 涂鸦 SurfaceView
  * 分为： 编辑状态或可视状态
  * 编辑状态下：单指绘画，双指移动
- * 可视状态下：单指移动，双指缩放 , 三指左右快速滑动 fling 翻页
+ * 可视状态下：单指移动，双指缩放 , 在非放大模式下（mScale == mScaleFirst），单指左右快速滑动 fling 翻页.
  * <p>
  * 可撤销，清屏
+ * // update: 2018/3/22 新增：
+ * 在可视模式下，宽高会自动适配屏幕显示。
+ * 在缩放到最小情况下，阴尼回弹显示。
+ * <p>
+ * 已知BUG:
+ * 在 data binding 下使用此 view 将会导致CPU 占用率100%
  * EzPhotoEditSurfaceView
  * Created by renwoxing on 2018/3/18.
  */
 public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
     private static final float VELOCITY_MULTI = 1f;// 滑动速度加权，计算松手后移动距离
-    private static final int VELOCITY_DURATION = 600;// 缓动持续时间
+    private static final int VELOCITY_DURATION = 600;// 滑动持续时间
     private static final int GESTURE_DETECTOR_CLICK = 0;  // 点击
     private static final int GESTURE_DETECTOR_DRAG = 1;   // 拖动
     private static final int GESTURE_DETECTOR_ZOOM = 2;   // 放大
@@ -46,7 +52,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     //触摸移动开始绘制 阀值
     private static final float TOUCH_TOLERANCE = 4;
-    private static final float TOUCH_ZOOM_TOLERANCE = 1f;
+    private static final float TOUCH_ZOOM_TOLERANCE = 10f;
+    //private static final float TOUCH_ZOOM_TOLERANCE = 1f;
 
     private EzDrawThread mEzDrawThread;//绘制线程
     private SurfaceHolder mSurfaceHolder;
@@ -78,6 +85,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     private boolean isMultiPointerToOneUp = true;   //多点触摸单指抬起后的标记
     private long lastMultiPointerTime;    // 记录多点触控的时间
     private boolean isFlingPage = false;  //翻页状态
+    private float mLastDistance = -1;    //记录在双指平移还是缩放时的
+
 
     private PhotoEditListener mPhotoEditListener;
 
@@ -119,6 +128,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mStartPoint = currentPoint;
             bx += offsetX;
             by += offsetY;
+            log(bx, by);
             postInvalidate(); //相当于递归computeScroll();目的是触发computeScroll
         } else if (mStatus == GESTURE_DETECTOR_DRAG && mClick == GESTURE_DETECTOR_DRAG) {
             mEzDrawThread.setCanPaint(false);
@@ -161,12 +171,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     //公有方法
     public void load(Bitmap bgBitmap) {
-        if (isEdit) {
-            if (mPhotoEditListener != null) {
-                mPhotoEditListener.info(503, "编辑状态下不能载入图片！");
-            }
-            return;
-        }
         resetClear();
         this.mEzBitmapCache.drawBitmap(bgBitmap);
         //重新校准位置和放大倍数
@@ -178,6 +182,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     public void load(final String path) {
         if (null != path) {
+            mEzDrawThread.setCanPaint(false);
             new EzLoadBitmapWorkerTask(new LoadBitmapWorkerListener() {
                 @Override
                 public void onPostExecute(Bitmap bgBitmap) {
@@ -379,7 +384,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         synchronized (EzPhotoEditSurfaceView.class) {
             PointF currentPoint = new PointF();
             //currentPoint.set(event.getX(), event.getY());
-            currentPoint.set(event.getRawX(), event.getRawY());
+            currentPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
             int offsetX = (int) (currentPoint.x - mStartPoint.x);
             int offsetY = (int) (currentPoint.y - mStartPoint.y);
             mStartPoint = currentPoint;
@@ -482,8 +487,9 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         setCurrentPathInfo(event);
                     } else {
                         //非编辑状态下记录此值
-                        mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
+                        //mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
                     }
+                    mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
                     mEzDrawThread.setCanPaint(true);
                     //Log.d("--", "11111 onTouch: ACTION_DOWN --- x:" + event.getRawX() + " y: " + event.getRawY());
                     break;
@@ -533,22 +539,32 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     if (Math.abs(firstX - centerBetweenFingers(event).x) < 3 || Math.abs(firstY - centerBetweenFingers(event).y) < 3) {
                         mClick = GESTURE_DETECTOR_CLICK; // 防止手滑的误差
                     } else {
-                        float lastDistance = distanceBetweenFingers(event); //现在手指间距离
-                        //Log.d("---", " ---- --- &****** onTouch: Math.abs(lastDistance - mStartDistance) :" + Math.abs(lastDistance - mStartDistance));
+                        float currentDistance = distanceBetweenFingers(event); //现在手指间距离
                         //只有两只之间的距离大于20像素的是时候算是多点的触摸
                         if (event.getPointerCount() > 1) {
-                            if (Math.abs(lastDistance - mStartDistance) < TOUCH_ZOOM_TOLERANCE &&
-                                    mStatus == GESTURE_DETECTOR_ZOOM) {
-                                mStatus = GESTURE_DETECTOR_DRAG;
-                            }
-                            if (Math.abs(lastDistance - mStartDistance) > TOUCH_ZOOM_TOLERANCE &&
-                                    mStatus == GESTURE_DETECTOR_DRAG) {
-                                mStatus = GESTURE_DETECTOR_ZOOM;
+                            if (mLastDistance < 0) {
+                                mLastDistance = currentDistance;  //第一次
+                            } else {
+                                //Log.d("---", " ---- --- &****** onTouch: Math.abs(mLastDistance - currentDistance) :" + Math.abs(mLastDistance - currentDistance));
+                                // 设置一个变化读取的阀值
+                                // 防止出现手指放在上面不动，一直在不断的放大缩小的情况  缩放模式下 最后的值将会转成 拖动。此处需要加入时间来判断
+                                if (Math.abs(currentDistance - mLastDistance) > TOUCH_ZOOM_TOLERANCE) {
+                                    //放大 缩小
+                                    mStatus = GESTURE_DETECTOR_ZOOM;
+                                    mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
+                                } else {
+                                    // 编辑模式下平移
+                                    if (mStatus == GESTURE_DETECTOR_ZOOM) {
+                                        mStatus = GESTURE_DETECTOR_DRAG;
+                                    }
+                                }
+                                mLastDistance = currentDistance;
                             }
                         }
                         //抖动问题  加入时间来判断。
                         if (mStatus == GESTURE_DETECTOR_DRAG) {
                             drag(event);
+                            mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
                             mClick = GESTURE_DETECTOR_DRAG;
                         } else {
                             //多指 需要延时来判断误触
@@ -566,10 +582,11 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                             if (mStatus == GESTURE_DETECTOR_ZOOM) {
                                 zoom(event);
                                 mClick = GESTURE_DETECTOR_DRAG;
+                                mEzDrawThread.setCanPaint(true);
                             }
                         }
                     }
-                    //Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + event.getRawX() + "y: " + event.getRawY() + " status:" + mStatus + " click:" + mClick);
+                    //Log.d("--", "333333333333333 onTouch: ACTION_MOVE --- x:" + centerBetweenFingers(event).x + "y: " + centerBetweenFingers(event).y + " \n         -------  start point x:" + mStartPoint.x + " y:" + mStartPoint.y+ " ******************** ---> status:" + mStatus + " click:" + mClick );
                     break;
                 case MotionEvent.ACTION_UP:
                     isFlingPage = false;
@@ -601,6 +618,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                         }
                     }
                     mStartDistance = 0;
+                    mLastDistance = -1;
+                    mClick = 0;
                     //Log.d("--", "444444444444 onTouch: ACTION_UP --- x:" + event.getRawX() + "y: " + event.getRawY());
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
@@ -609,7 +628,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     if (isEdit) {
                         mStatus = GESTURE_DETECTOR_PATH;
                     } else {
-                        mStatus = GESTURE_DETECTOR_DRAG;
+                        //mStatus = GESTURE_DETECTOR_DRAG;
+                        //mClick = 0;
                     }
                     //多指中一指收起
                     //mStartDistance = 0;
