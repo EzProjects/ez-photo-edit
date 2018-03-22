@@ -19,10 +19,6 @@ import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    //private EzBitmapDrawBuffer ezBitmapData = new EzBitmapDrawBuffer();
-
-    private Bitmap bmp;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
-
         pesv.setPhotoEditListener(new PhotoEditListener() {
             @Override
             public void info(int code, String msg) {
@@ -48,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
-
             @Override
             public void next() {
                 findViewById(R.id.tip).setVisibility(View.VISIBLE);
@@ -65,40 +59,9 @@ public class MainActivity extends AppCompatActivity {
                 pesv.load(path);
             }
         });
-        //延迟展区区域数据加载
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    Thread.sleep(200);
-//                } catch (InterruptedException e) {
-//                }
-//                //背景图
-//                BitmapFactory.Options opt = new BitmapFactory.Options();
-//                opt.inPreferredConfig = Bitmap.Config.RGB_565;
-//                try {
-//                    InputStream inputStream = getAssets().open("111.jpg");
-//                    //bmp = BitmapFactory.decodeResource(getResources(), R.drawable.zxc, opt);//图片资源
-//                    bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-//                    //ezBitmapData.drawBitmap(bmp);//设置图片
-//                    pesv.load(bmp);//初始化
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//                bmp = null;
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        findViewById(R.id.tip).setVisibility(View.GONE);
-//                    }
-//                });
-//            }
-//        }).start();
 
         try {
-
             Log.d("=-=", "onCreate: " + path);
-            //InputStream inputStream = getAssets().open("jj.jpeg");
             pesv.load(path);
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,30 +98,6 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.tip).setVisibility(View.VISIBLE);
                 Log.d("=-=", "onCreate: " + path2);
                 pesv.load(path2);
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        //背景图
-//                        BitmapFactory.Options opt = new BitmapFactory.Options();
-//                        opt.inPreferredConfig = Bitmap.Config.RGB_565;
-//                        try {
-//                            InputStream inputStream = getAssets().open("jj.jpeg");
-//                            bmp = BitmapFactory.decodeStream(inputStream);//图片资源
-//                            //ezBitmapData.drawBitmap(bmp);//设置图片
-//                            pesv.load(bmp);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        //bmp.recycle();
-//                        bmp = null;
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                findViewById(R.id.tip).setVisibility(View.GONE);
-//                            }
-//                        });
-//                    }
-//                }).start();
             }
         });
 
@@ -183,55 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
-
-
-//    EzDrawInfo mCurrentPathInfo = new EzDrawPath();
-//    List<EzDrawInfo> mPathInfoList = new ArrayList<>();
-
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        //mPhotoEditSurfaceView.onTouchEvent(event);
-//
-//        int action = event.getAction();
-//        if (action == MotionEvent.ACTION_CANCEL) {
-//            return false;
-//        }
-//        if (event.getPointerCount() < 2) {
-//            float touchX = event.getRawX();
-//            float touchY = event.getRawY();
-//
-//            switch (action) {
-//                case MotionEvent.ACTION_DOWN:
-//                    setCurrentPathInfo(touchX, touchY);
-//                    break;
-//                case MotionEvent.ACTION_MOVE:
-//                    mCurrentPathInfo.pathMove(touchX, touchY);
-//                    Log.d("--", "onTouchEvent x: " + touchX + " y:" + touchY + " size:" + mPathInfoList.size());
-//                    break;
-//                case MotionEvent.ACTION_UP:
-//                    mCurrentPathInfo.pathMove(touchX, touchY);
-//                    mPathInfoList.add(mCurrentPathInfo);
-//                    mCurrentPathInfo = null;
-//                    ezBitmapData.setPathInfo(mCurrentPathInfo);
-//                    ezBitmapData.refreshData();
-//                    break;
-//                default:
-//                    break;
-//            }
-//        } else {
-//
-//        }
-//        return false;
-//    }
-//
-//
-//    public void setCurrentPathInfo(float x, float y) {
-//        mCurrentPathInfo = new EzDrawPath(x, y, 5, Color.RED);
-//    }
-
 
     public void copy(String ASSETS_NAME, String savePath, String saveName) {
         String filename = savePath + File.separator + saveName;
