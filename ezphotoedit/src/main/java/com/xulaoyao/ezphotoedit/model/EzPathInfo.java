@@ -113,6 +113,7 @@ public class EzPathInfo {
             PointF startPoint = curve.startPoint;
             PointF endPoint = curve.endPoint;
 
+            // TODO: 2018/3/22 path.cubicTo 不能画出笔迹粗细来，需要使用画点来绘制 Canvas  drawPoint();
             path.cubicTo(c2.x, c2.y, c3.x, c3.y, endPoint.x, endPoint.y);
 
 

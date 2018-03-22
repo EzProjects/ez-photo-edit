@@ -37,7 +37,7 @@ import java.util.List;
  * 在缩放到最小情况下，阴尼回弹显示。
  * <p>
  * 已知BUG:
- * 在 data binding 下使用此 view 将会导致CPU 占用率100%
+ * 在 data binding 不建议使用此 View
  * EzPhotoEditSurfaceView
  * Created by renwoxing on 2018/3/18.
  */
@@ -363,8 +363,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             mPicWidth *= scale1;
             float fx = 0f, fy = 0f;
             if (event.getPointerCount() > 1) {
-                //fx = (event.getX(1) - event.getX(0)) / 2 + event.getX(0);//中点坐标
-                //fy = (event.getY(1) - event.getY(0)) / 2 + event.getY(0);
                 fx = centerBetweenFingers(event).x;
                 fy = centerBetweenFingers(event).y;
             }
@@ -627,9 +625,6 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     lastMultiPointerTime = System.currentTimeMillis();
                     if (isEdit) {
                         mStatus = GESTURE_DETECTOR_PATH;
-                    } else {
-                        //mStatus = GESTURE_DETECTOR_DRAG;
-                        //mClick = 0;
                     }
                     //多指中一指收起
                     //mStartDistance = 0;
