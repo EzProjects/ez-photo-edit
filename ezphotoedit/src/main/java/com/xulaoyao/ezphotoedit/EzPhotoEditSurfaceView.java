@@ -211,6 +211,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                 public void onPostExecute(Bitmap bgBitmap) {
                     if (bgBitmap != null) {
                         load(bgBitmap);
+                        if (mEzLoadBitmapWorkerTask != null) {
+                            mEzLoadBitmapWorkerTask.cancel(true);
+                            mEzLoadBitmapWorkerTask = null;
+                        }
                         if (mPhotoEditListener != null) {
                             mPhotoEditListener.info(200, "加载完成");
                         }
@@ -271,6 +275,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      */
     public void setEdit(boolean edit) {
         isEdit = edit;
+        if (!isEdit) {
+            //需要复原
+            mScale = mScaleFirst;
+            bx = 0;
+            by = 0;
+            setPicInit();
+        }
     }
 
     public boolean isIsHandWriting() {
@@ -396,7 +407,9 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             inBgBitmapY *= scale1;
             bx = fx - inBgBitmapX;//左上角的坐标等于中点坐标加图中偏移的坐标
             by = fy - inBgBitmapY;
+            //left top 需要设置一个安全区域。只能在此区域变化。
             log(bx, by);
+            checkOffsetValid(event);
         }
     }
 
@@ -451,8 +464,10 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @return
      */
     public PointF getMotionEventPointInBgBitmapPointF(MotionEvent event) {
-        float inBgBitmapX = centerBetweenFingers(event).x - bx;//获得中点在图中的坐标
-        float inBgBitmapY = centerBetweenFingers(event).y - by;
+        //float inBgBitmapX = centerBetweenFingers(event).x - bx;//获得中点在图中的坐标
+        float inBgBitmapX = event.getRawX() - bx;//获得中点在图中的坐标
+        //float inBgBitmapY = centerBetweenFingers(event).y - by;
+        float inBgBitmapY = event.getY() - by;
         inBgBitmapX /= mScale;//坐标根据图片缩放而变化
         inBgBitmapY /= mScale;
         return new PointF(inBgBitmapX, inBgBitmapY);
@@ -542,14 +557,14 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     }
                     //log(xVelocity, yVelocity);
                     if (!isEdit && event.getPointerCount() == 1 && mScale == mScaleFirst) {
-                        //翻页
-                        if (xVelocity > 600) {
+                        //翻页 水平
+                        if (xVelocity > 1000 && Math.abs(firstY - centerBetweenFingers(event).y) < 5) {
                             if (mPhotoEditListener != null && !isFlingPage) {
                                 isFlingPage = true;
                                 mPhotoEditListener.next();
                             }
                         }
-                        if (xVelocity < -600) {
+                        if (xVelocity < -1000 && Math.abs(firstY - centerBetweenFingers(event).y) < 5) {
                             if (mPhotoEditListener != null && !isFlingPage) {
                                 isFlingPage = true;
                                 mPhotoEditListener.previous();
@@ -558,7 +573,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     }
                     if (!isEdit && isFlingPage) {
                         //Log.d("=---", "onTouch: --- isFlingPage:" + isFlingPage);
-                        return true;
+                        //return true;
                     }
                     if (!isEdit && event.getPointerCount() == 1 && (Math.abs(firstX - centerBetweenFingers(event).x) < 3 || Math.abs(firstY - centerBetweenFingers(event).y) < 3)) {
                         mClick = GESTURE_DETECTOR_CLICK; // 防止手滑的误差
@@ -654,13 +669,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     if (isEdit) {
                         mStatus = GESTURE_DETECTOR_PATH;
                     } else {
-                        //mStatus = GESTURE_DETECTOR_DRAG;
+                        mStatus = GESTURE_DETECTOR_DRAG;
+                        mStartPoint.set(centerBetweenFingers(event).x, centerBetweenFingers(event).y);
                     }
                     //多指中一指收起
                     mStartDistance = 0;
                     //Log.d("--", "55555 onTouch: ACTION_POINTER_UP --- x:" + event.getX() + "y: " + event.getY());
                     break;
-
                 case MotionEvent.ACTION_CANCEL:
                     mVelocityTracker.recycle();
                     break;
@@ -713,6 +728,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         Log.d("-log-", "--- screen: width:" + mScreenWidth + " height:" + mScreenHeight);
         Log.d("-log-", "--- image: width:" + mPicWidth + " height:" + mPicHeight);
         Log.d("-log-", "--- 偏移: bx:" + bx + " by:" + by);
+        Log.d("-log-", "--- mScale:" + mScale);
     }
 
     /**
@@ -724,19 +740,27 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         //Log.d("-=-=-=-", "resetZoomToFirstScale: mScale:" + mScale + " | " + mScaleFirst);
         if (!isEdit) {
             if (mScale < mScaleFirst) {
-//                mPicWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScaleFirst;
-//                mPicHeight = mEzBitmapCache.getBgAndPathBitmap().getHeight() * mScaleFirst;
-//                //初始坐标
-//                float mFirstScaleX = (mScreenWidth - mPicWidth) / 2;
-//                float mFirstScaleY = (mScreenHeight - mPicHeight) / 2;
-//                mScroller.startScroll((int) mFirstScaleX, (int) mFirstScaleY, (int) Math.abs(mFirstScaleX - mStartPoint.x), (int)Math.abs (mFirstScaleY- mStartPoint.y), 500);
                 mScale = mScaleFirst;
-                log(bx, by);
                 bx = 0;
                 by = 0;
                 setPicInit();
             }
         }
+    }
+
+
+    /**
+     * 检测 bx by
+     * 是否在有效区域内
+     */
+    private void checkOffsetValid(MotionEvent event) {
+        if (mScreenWidth < bx || mScreenHeight < by) {
+            float imageWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScale;
+            float imageHeight = mEzBitmapCache.getBgAndPathBitmap().getHeight() * mScale;
+            bx = centerBetweenFingers(event).x - imageWidth / 2;
+            by = centerBetweenFingers(event).y - imageHeight / 2;
+        }
+
     }
 
 }
