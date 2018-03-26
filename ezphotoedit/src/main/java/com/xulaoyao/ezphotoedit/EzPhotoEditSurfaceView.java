@@ -558,13 +558,13 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //log(xVelocity, yVelocity);
                     if (!isEdit && event.getPointerCount() == 1 && mScale == mScaleFirst) {
                         //翻页 水平
-                        if (xVelocity > 1000 && Math.abs(firstY - centerBetweenFingers(event).y) < 5) {
+                        if (xVelocity > 300 && mScale == mScaleFirst) {
                             if (mPhotoEditListener != null && !isFlingPage) {
                                 isFlingPage = true;
                                 mPhotoEditListener.next();
                             }
                         }
-                        if (xVelocity < -1000 && Math.abs(firstY - centerBetweenFingers(event).y) < 5) {
+                        if (xVelocity < -300 && mScale == mScaleFirst) {
                             if (mPhotoEditListener != null && !isFlingPage) {
                                 isFlingPage = true;
                                 mPhotoEditListener.previous();
