@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -328,8 +329,18 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     c.drawColor(Color.GRAY);
                     c.scale(mScale, mScale);
                     try {
-                        if (mEzBitmapCache.getBgAndPathBitmap() != null)
+//                        int sleft, stop, sright, sbottom;
+//                        sleft = (int) (bx / mScale);
+//                        stop = (int) (by / mScale);
+//                        sright = sleft + getWidth();
+//                        sbottom = stop + getHeight();
+//                        Rect srcRect = new Rect(sleft, stop, sright, sbottom);
+//                        Rect dstRect = new Rect(0, 0, getWidth(), getHeight());
+                        // TODO: 2018/4/3 需要优化只加载需要显示的区域 
+                        if (mEzBitmapCache.getBgAndPathBitmap() != null) {
+                            //c.drawBitmap(mEzBitmapCache.getBgAndPathBitmap(), srcRect, dstRect, mPaint);
                             c.drawBitmap(mEzBitmapCache.getBgAndPathBitmap(), bx / mScale, by / mScale, mPaint);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -408,7 +419,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
             bx = fx - inBgBitmapX;//左上角的坐标等于中点坐标加图中偏移的坐标
             by = fy - inBgBitmapY;
             //left top 需要设置一个安全区域。只能在此区域变化。
-            log(bx, by);
+            //log(bx, by);
             checkOffsetValid(event);
         }
     }
@@ -544,37 +555,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     //Log.d("--", "2222222222 onTouch: ACTION_POINTER_DOWN --- x:" + event.getX() + "y: " + event.getY());
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    //滑动速度
-                    //获得VelocityTracker对象，并且添加滑动对象
-                    //值为1时：代表每毫秒运动一个像素，px/ms
-                    //值为1000时：代表每秒运动1000个像素，1000px/s
-                    int xVelocity = 0;
-                    int yVelocity = 0;
-                    if (mVelocityTracker != null) {
-                        mVelocityTracker.computeCurrentVelocity(1000);
-                        xVelocity = (int) (mVelocityTracker.getXVelocity() * VELOCITY_MULTI);
-                        yVelocity = (int) (mVelocityTracker.getYVelocity() * VELOCITY_MULTI);
-                    }
-                    //log(xVelocity, yVelocity);
-                    if (!isEdit && event.getPointerCount() == 1 && mScale == mScaleFirst) {
-                        //翻页 水平
-                        if (xVelocity > 300 && mScale == mScaleFirst) {
-                            if (mPhotoEditListener != null && !isFlingPage) {
-                                isFlingPage = true;
-                                mPhotoEditListener.next();
-                            }
-                        }
-                        if (xVelocity < -300 && mScale == mScaleFirst) {
-                            if (mPhotoEditListener != null && !isFlingPage) {
-                                isFlingPage = true;
-                                mPhotoEditListener.previous();
-                            }
-                        }
-                    }
-                    if (!isEdit && isFlingPage) {
-                        //Log.d("=---", "onTouch: --- isFlingPage:" + isFlingPage);
-                        //return true;
-                    }
+
                     if (!isEdit && event.getPointerCount() == 1 && (Math.abs(firstX - centerBetweenFingers(event).x) < 3 || Math.abs(firstY - centerBetweenFingers(event).y) < 3)) {
                         mClick = GESTURE_DETECTOR_CLICK; // 防止手滑的误差
                     } else {
@@ -681,6 +662,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
                     break;
             }
         }
+        //手势滑动
+        mGestureDetector.onTouchEvent(event);
         return true;
     }
 
@@ -762,5 +745,31 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
         }
 
     }
+
+
+    private int verticalMinDistance = 200;
+    private int minVelocity = 500;
+    private GestureDetector mGestureDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
+
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            //只有在单指模式结束之后才允许执行fling
+            //滑动
+            if (!isEdit && mStatus == GESTURE_DETECTOR_DRAG && mScale == mScaleFirst) {
+                if (e1.getX() - e2.getX() > verticalMinDistance && Math.abs(velocityX) > minVelocity) {
+                    //Log.d("=-=-", "《----------onFling:  左滑");
+                    mPhotoEditListener.previous();
+                } else if (e2.getX() - e1.getX() > verticalMinDistance && Math.abs(velocityX) > minVelocity) {
+                    //Log.d("=-=-", "---------》onFling:  右滑");
+                    mPhotoEditListener.next();
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+    });
 
 }
