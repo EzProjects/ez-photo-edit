@@ -24,11 +24,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String name = "22.png";
+        //String name = "22.png";
+        String name = "111.jpg";
         copy(name, getFilesDir().getAbsolutePath(), name);
         final String path = getFilesDir().getAbsolutePath() + File.separator + name;
 
-        String name2 = "ico_feed_rate.png";
+        //String name2 = "ico_feed_rate.png";
+        String name2 = "jj.jpeg";
         copy(name2, getFilesDir().getAbsolutePath(), name2);
         final String path2 = getFilesDir().getAbsolutePath() + File.separator + name2;
 

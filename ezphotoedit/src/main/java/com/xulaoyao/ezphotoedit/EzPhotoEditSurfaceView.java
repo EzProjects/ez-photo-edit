@@ -150,6 +150,12 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         mScreenWidth = this.getWidth();
         mScreenHeight = this.getHeight();
+        // fix bug 小图不正常显示
+        //重新校准位置和放大倍数
+        setScale(true);
+        setPicInit();
+        //绘制 防止不正常显示
+        mEzDrawThread.setCanPaint(true);
     }
 
     @Override
@@ -361,6 +367,7 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
      * @param changeFirst
      */
     private void setScale(boolean changeFirst) {
+        if (mEzBitmapCache.getBgAndPathBitmap() == null) return;
         float scaleWidth = mScreenWidth / mEzBitmapCache.getBgAndPathBitmap().getWidth();
         float scaleHeight = mScreenHeight / mEzBitmapCache.getBgAndPathBitmap().getHeight();
         mScale = scaleWidth > scaleHeight ? scaleHeight : scaleWidth;
@@ -382,6 +389,8 @@ public class EzPhotoEditSurfaceView extends SurfaceView implements SurfaceHolder
 
     private void setPicInit() {
         if (bx != 0 && by != 0) return;
+        if (mEzBitmapCache.getBgAndPathBitmap() == null)
+            return;
         //图片初始状态
         mPicWidth = mEzBitmapCache.getBgAndPathBitmap().getWidth() * mScale;
         mPicHeight = mEzBitmapCache.getBgAndPathBitmap().getHeight() * mScale;
