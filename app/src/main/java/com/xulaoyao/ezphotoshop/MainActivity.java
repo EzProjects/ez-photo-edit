@@ -24,13 +24,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String name = "111.jpg";
+        String name = "22.png";
         copy(name, getFilesDir().getAbsolutePath(), name);
         final String path = getFilesDir().getAbsolutePath() + File.separator + name;
 
-        String name2 = "jj.jpeg";
+        String name2 = "ico_feed_rate.png";
         copy(name2, getFilesDir().getAbsolutePath(), name2);
         final String path2 = getFilesDir().getAbsolutePath() + File.separator + name2;
+
+        String name3 = "ic_expand.png";
+        copy(name3, getFilesDir().getAbsolutePath(), name3);
+        final String path3 = getFilesDir().getAbsolutePath() + File.separator + name3;
 
 
         final EzPhotoEditSurfaceView pesv = (EzPhotoEditSurfaceView) findViewById(R.id.pesv_image);
@@ -96,8 +100,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 findViewById(R.id.tip).setVisibility(View.VISIBLE);
-                Log.d("=-=", "onCreate: " + path2);
-                pesv.load(path2);
+                Log.d("=-=", "onCreate: " + path3);
+                pesv.load(path3);
             }
         });
 
